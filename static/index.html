@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook — Email Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f3f2f1;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .outlook-container { display: flex; flex-direction: column; height: 100vh; }
+
+        /* ─── Header ─── */
+        .header-bar {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-bar .logo { font-size: 20px; font-weight: 600; margin-right: 30px; }
+        .header-bar .search-box { flex: 1; max-width: 600px; }
+        .header-bar .search-box input {
+            width: 100%; padding: 8px 16px; border: none; border-radius: 4px;
+            background: rgba(255,255,255,0.15); color: white; font-size: 14px;
+        }
+        .header-bar .search-box input::placeholder { color: rgba(255,255,255,0.7); }
+        .header-bar .user-info { display: flex; align-items: center; gap: 12px; }
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            color: #0078d4; font-weight: 600; font-size: 13px;
+        }
+
+        /* ─── Main ─── */
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+
+        /* ─── Sidebar ─── */
+        .sidebar {
+            width: 200px; background: #f9f9f9; border-right: 1px solid #e1e1e1;
+            display: flex; flex-direction: column;
+        }
+        .new-email-btn {
+            margin: 12px; padding: 10px 16px; background: #0078d4; color: white;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+            font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .new-email-btn:hover { background: #106ebe; }
+        .folder-list { flex: 1; overflow-y: auto; }
+        .folder-item {
+            padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; font-size: 13px; transition: background 0.2s;
+        }
+        .folder-item:hover { background: #e6e6e6; }
+        .folder-item.active { background: #e1f2ff; border-left: 3px solid #0078d4; font-weight: 600; }
+        .folder-badge {
+            margin-left: auto; background: #0078d4; color: white;
+            padding: 2px 8px; border-radius: 10px; font-size: 11px;
+        }
+
+        /* ─── Test Email Button (sidebar bottom) ─── */
+        .test-email-btn {
+            margin: 8px 12px 12px; padding: 9px 16px; background: white;
+            color: #605e5c; border: 1px dashed #c8c8c8; border-radius: 4px;
+            cursor: pointer; font-size: 12px; display: flex; align-items: center;
+            justify-content: center; gap: 6px; transition: all 0.2s;
+        }
+        .test-email-btn:hover { border-color: #0078d4; color: #0078d4; background: #f0f6ff; }
+        .test-tab { flex:1; text-align:center; padding:10px; font-size:13px; font-weight:500; color:#605e5c; cursor:pointer; transition:all 0.15s; }
+        .test-tab:hover { color:#0078d4; background:#f5f9ff; }
+        .test-tab.active { color:#0078d4; border-bottom:2px solid #0078d4; font-weight:600; }
+        .batch-email-card { padding:10px 12px; background:#f9f9f9; border-radius:6px; border:1px solid #e8e8e8; margin-bottom:6px; font-size:12px; }
+        .batch-email-card .batch-from { font-weight:600; color:#323130; }
+        .batch-email-card .batch-subj { color:#605e5c; margin-top:2px; }
+        .batch-email-card .batch-body-preview { color:#a0a0a0; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+        /* ─── AI Assistant Button ─── */
+        .ai-btn {
+            margin: 8px 12px; padding: 10px 16px; border-radius: 4px; font-size: 13px;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center;
+            gap: 8px; transition: all 0.2s; width: calc(100% - 24px); border: none;
+        }
+        .ai-btn.off {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white;
+        }
+        .ai-btn.off:hover { filter: brightness(1.1); }
+        .ai-btn.on {
+            background: linear-gradient(135deg, #00b894, #55efc4); color: #2d3436;
+        }
+        .ai-btn.on:hover { filter: brightness(0.95); }
+        .ai-btn-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .ai-btn-dot.off { background: rgba(255,255,255,0.5); }
+        .ai-btn-dot.on { background: #2d3436; animation: pulse-dot 2s infinite; }
+        .ai-btn-gear { margin-left: auto; font-size: 14px; opacity: 0.7; }
+        .ai-btn-gear:hover { opacity: 1; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* ─── Email List ─── */
+        .email-list-container {
+            width: 380px; min-width: 280px; max-width: 600px; background: white;
+            border-right: 1px solid #e1e1e1; display: flex; flex-direction: column;
+            position: relative;
+        }
+        .resize-handle {
+            position: absolute; top: 0; right: -3px; width: 6px; height: 100%;
+            cursor: col-resize; z-index: 10;
+        }
+        .resize-handle:hover, .resize-handle.active {
+            background: #0078d4;
+        }
+        .email-tabs {
+            display: flex; border-bottom: 1px solid #e1e1e1; background: #fafafa;
+            overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .email-tabs::-webkit-scrollbar { display: none; }
+        .email-tab {
+            flex: 0 0 auto; padding: 10px 14px; text-align: center; cursor: pointer;
+            font-size: 12px; font-weight: 500; border-bottom: 2px solid transparent;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .email-tab:hover { background: #f0f0f0; }
+        .email-tab.active { background: white; border-bottom-color: #0078d4; color: #0078d4; }
+        .email-tab .badge {
+            display: inline-block; padding: 2px 6px; border-radius: 10px;
+            font-size: 10px; margin-left: 4px;
+        }
+        .email-tab .badge.urgent { background: #d13438; color: white; }
+        .email-tab .badge.later  { background: #ff8c00; color: white; }
+        .email-tab .badge.ignore { background: #107c10; color: white; }
+
+        .email-list { flex: 1; overflow-y: auto; }
+        .email-item {
+            padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
+            cursor: pointer; transition: background 0.2s; position: relative;
+        }
+        .email-item:hover { background: #f5f5f5; }
+        .email-item.selected { background: #e1f2ff; }
+        .email-item.unread .sender-name { font-weight: 800; color: #000; }
+        .email-item.unread .email-subject { font-weight: 700; color: #000; }
+        .email-item.unread .email-preview { color: #444; }
+        .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #0078d4; flex-shrink: 0; margin-right: 8px; margin-top: 3px; }
+        .email-item:not(.unread) .unread-dot { visibility: hidden; }
+        .email-sender { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .sender-name { font-size: 13px; font-weight: 600; color: #323130; }
+        .email-time { font-size: 11px; color: #605e5c; }
+        .email-subject {
+            font-size: 13px; color: #323130; margin-bottom: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .email-preview {
+            font-size: 12px; color: #605e5c;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .priority-dot { display: none; }
+
+        /* ─── Content Area ─── */
+        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+        /* ─── Agent Sidebar (Right) ─── */
+        .agent-sidebar {
+            width: 340px; min-width: 340px; background: #f8f7ff;
+            border-left: 1px solid #e0e0f0; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .agent-sidebar.hidden { display: none; }
+        .agent-sidebar-header {
+            padding: 14px 20px; background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; font-weight: 600; font-size: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .agent-close-btn {
+            margin-left: auto; background: none; border: none; color: white;
+            font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+            opacity: 0.8; transition: opacity 0.15s;
+        }
+        .agent-close-btn:hover { opacity: 1; }
+        .agent-sidebar-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .content-body { flex: 1; overflow-y: auto; background: white; }
+
+        /* ─── Agent Floating Ball ─── */
+        .agent-fab {
+            display: none; position: fixed; top: 60px; right: 16px; width: 44px; height: 44px;
+            border-radius: 50%; background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; font-size: 20px; border: none; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(108,92,231,0.4); z-index: 500;
+            align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .agent-fab:hover { transform: scale(1.1); box-shadow: 0 6px 18px rgba(108,92,231,0.5); }
+        .agent-fab.visible { display: flex; }
+
+        /* ─── Email Detail ─── */
+        .email-detail { padding: 20px; }
+        .detail-header { margin-bottom: 20px; }
+        .detail-subject { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+        .detail-meta { display: flex; align-items: center; gap: 12px; }
+        .sender-avatar-lg {
+            width: 40px; height: 40px; border-radius: 50%; background: #0078d4;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 600; font-size: 16px;
+        }
+        .detail-body { line-height: 1.8; color: #323130; white-space: pre-wrap; }
+        .thread-view { display: flex; flex-direction: column; gap: 0; }
+        .thread-msg { padding: 14px 16px; border-left: 3px solid #e0e0e0; margin-left: 0; position: relative; }
+        .thread-msg:last-child { border-left-color: #7c5cfc; background: #faf8ff; border-radius: 0 8px 8px 0; }
+        .thread-msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .thread-msg-avatar { width: 28px; height: 28px; border-radius: 50%; background: #e8e8e8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #605e5c; flex-shrink: 0; }
+        .thread-msg:last-child .thread-msg-avatar { background: #7c5cfc; color: white; }
+        .thread-msg-name { font-weight: 600; font-size: 13px; color: #323130; display: flex; align-items: center; gap: 6px; }
+        .thread-msg-time { font-size: 11px; color: #a0a0a0; }
+        .thread-msg-meta { font-size: 11px; color: #a0a0a0; margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+        .thread-msg-badge { font-size: 10px; background: #7c5cfc; color: white; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+        .thread-msg-body { font-size: 13px; line-height: 1.7; color: #323130; white-space: pre-wrap; }
+        .thread-divider { display: flex; align-items: center; gap: 8px; margin: 4px 0; padding-left: 16px; }
+        .thread-divider::before, .thread-divider::after { content: ''; flex: 1; height: 1px; background: #e8e8e8; }
+        .thread-divider span { font-size: 11px; color: #a0a0a0; white-space: nowrap; }
+        .thread-toggle { display: flex; align-items: center; gap: 6px; padding: 8px 16px; cursor: pointer; font-size: 12px; color: #7c5cfc; font-weight: 500; border: none; background: none; }
+        .thread-toggle:hover { text-decoration: underline; }
+        .thread-older { display: none; }
+        .thread-older.open { display: block; }
+        .detail-actions {
+            display: flex; gap: 8px; margin-top: 20px; padding-top: 20px;
+            border-top: 1px solid #e1e1e1;
+        }
+        .action-btn {
+            padding: 8px 16px; border: 1px solid #d2d0ce; background: white;
+            border-radius: 4px; cursor: pointer; font-size: 12px;
+            display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+        }
+        .action-btn:hover { background: #f3f2f1; }
+        .action-btn.primary { background: #0078d4; color: white; border-color: #0078d4; }
+
+        /* ─── Agent Panel (inside sidebar) ─── */
+        .agent-panel { padding: 0; }
+        .agent-header { display: none; }
+        .agent-loading {
+            text-align: center; padding: 24px; color: #605e5c;
+        }
+        .agent-loading .spinner {
+            display: inline-block; width: 20px; height: 20px; border: 3px solid #e1e1e1;
+            border-top: 3px solid #0078d4; border-radius: 50%; animation: spin 1s linear infinite;
+            margin-right: 8px; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .priority-badge-lg {
+            padding: 12px 24px; border-radius: 8px; font-size: 16px;
+            font-weight: 700; text-align: center; margin-bottom: 16px;
+        }
+        .priority-badge-lg.act_now { background: linear-gradient(135deg, #d13438, #a4262c); color: white; }
+        .priority-badge-lg.later   { background: linear-gradient(135deg, #ff8c00, #e67e00); color: white; }
+        .priority-badge-lg.ignore  { background: linear-gradient(135deg, #107c10, #0b5c0b); color: white; }
+
+        .agent-metrics {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;
+        }
+        .agent-metric { text-align: center; padding: 12px; background: white; border-radius: 8px; }
+        .agent-metric-value { font-size: 20px; font-weight: 700; color: #323130; }
+        .agent-metric-label { font-size: 11px; color: #605e5c; margin-top: 4px; }
+
+        /* ─── Priority + Actions Row ─── */
+        .pri-action-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+        .pri-action-row .priority-badge-lg { flex: 1; margin-bottom: 0; padding: 10px 16px; font-size: 14px; }
+        .pri-action-btn {
+            height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #e1e1e1;
+            background: white; cursor: pointer; font-size: 12px; font-weight: 500; color: #605e5c;
+            display: flex; align-items: center; gap: 4px; transition: all 0.15s; white-space: nowrap;
+        }
+        .pri-action-btn:hover { background: #f5f5f5; border-color: #c0c0c0; color: #323130; }
+        .pri-action-btn.handled-active { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+        .pri-action-btn.handled-active:hover { background: #d1fae5; }
+        .pri-edit-wrap { position: relative; }
+        .pri-menu {
+            display: none; position: absolute; top: 42px; right: 0; background: white;
+            border: 1px solid #e1e1e1; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 100; overflow: hidden; min-width: 150px;
+        }
+        .pri-menu.open { display: block; }
+        .pri-menu-item {
+            padding: 10px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: background 0.1s;
+        }
+        .pri-menu-item:hover { background: #f5f5f5; }
+        .pri-menu-item.active { font-weight: 700; background: #f0f6ff; }
+        .email-item.handled { opacity: 0.6; }
+        .handled-dot { font-size: 10px; position: absolute; right: 12px; top: 12px; }
+        .pri-overridden {
+            display: inline-block; font-size: 10px; color: #605e5c; background: #f0f0f0;
+            padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: 400;
+        }
+
+        .reasons-section { margin-bottom: 16px; }
+        .reasons-section h4 { font-size: 13px; margin-bottom: 8px; }
+        .reason-chip {
+            display: inline-block; padding: 4px 10px; background: white; border-radius: 12px;
+            font-size: 12px; margin: 2px 4px 2px 0; border: 1px solid #e1e1e1;
+        }
+        .key-excerpt {
+            padding: 10px 14px; background: #fff; border-left: 3px solid #0078d4;
+            border-radius: 4px; font-size: 12px; color: #605e5c; font-style: italic;
+            margin-bottom: 16px;
+        }
+
+        .action-items-section { margin-top: 16px; }
+        .action-items-section h4 { font-size: 13px; margin-bottom: 12px; }
+        .extracted-action {
+            display: flex; align-items: flex-start; gap: 10px; padding: 12px;
+            background: white; border-radius: 8px; margin-bottom: 8px; font-size: 13px;
+        }
+        .extracted-action .checkbox { width: 16px; height: 16px; cursor: pointer; margin-top: 2px; }
+        .extracted-action.added { opacity: 0.65; }
+        .extracted-action.added .checkbox { cursor: default; accent-color: #999; }
+        .action-urgency {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 600; margin-left: 8px;
+        }
+        .action-urgency.high   { background: #fde7e9; color: #d13438; }
+        .action-urgency.medium { background: #fff4e5; color: #e67e00; }
+        .action-urgency.low    { background: #e6f4e6; color: #107c10; }
+        .action-due { font-size: 11px; color: #605e5c; margin-top: 4px; }
+        .action-type-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 600; margin-left: 4px;
+        }
+        .action-type-badge.todo { background: #e6f4e6; color: #107c10; }
+        .action-type-badge.cal  { background: #e1f2ff; color: #0078d4; }
+
+        .add-to-todo-btn {
+            width: 100%; padding: 12px; background: #0078d4; color: white;
+            border: none; border-radius: 8px; cursor: pointer; font-size: 13px;
+            font-weight: 600; margin-top: 12px;
+        }
+        .add-to-todo-btn:hover { background: #106ebe; }
+
+        .analyze-btn {
+            width: 100%; padding: 12px; background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 14px; font-weight: 600; transition: all 0.2s;
+        }
+        .analyze-btn:hover { filter: brightness(1.1); }
+        .analyze-btn:disabled { opacity: 0.6; cursor: wait; }
+
+        .agent-error {
+            padding: 12px; background: #fde7e9; border-radius: 8px;
+            color: #a4262c; font-size: 13px;
+        }
+
+        /* ─── Todo Full Page ─── */
+        .todo-page { max-width: 720px; margin: 0 auto; padding: 0 32px; }
+        .todo-top-tabs {
+            display: flex; align-items: center; gap: 4px; padding: 12px 0;
+            border-bottom: 1px solid #e1e1e1;
+        }
+        .todo-top-tab {
+            padding: 6px 16px; font-size: 14px; cursor: pointer;
+            border-bottom: 2px solid transparent; color: #605e5c; font-weight: 500;
+        }
+        .todo-top-tab:hover { color: #323130; }
+        .todo-top-tab.active { color: #0078d4; border-bottom-color: #0078d4; font-weight: 600; }
+        .todo-top-tab .tab-count {
+            display: inline-block; background: #0078d4; color: white;
+            padding: 1px 7px; border-radius: 10px; font-size: 11px; margin-left: 4px;
+        }
+        .todo-section-title {
+            font-size: 18px; font-weight: 700; color: #323130; padding: 24px 0 12px;
+        }
+        .todo-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0; transition: background 0.15s;
+        }
+        .todo-item:hover { background: #fafafa; margin: 0 -8px; padding: 12px 8px; border-radius: 6px; }
+        .todo-item.completed { opacity: 0.5; }
+        .todo-item.completed .todo-text { text-decoration: line-through; color: #a0a0a0; }
+        .todo-checkbox {
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #c8c8c8;
+            cursor: pointer; appearance: none; -webkit-appearance: none; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+        }
+        .todo-checkbox:checked { background: #0078d4; border-color: #0078d4; }
+        .todo-checkbox:checked::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+        .todo-content { flex: 1; min-width: 0; }
+        .todo-text { font-size: 14px; color: #323130; }
+        .todo-text .priority-mark { color: #d13438; font-weight: 700; margin-right: 4px; }
+        .todo-sub { font-size: 12px; color: #605e5c; margin-top: 2px; display: flex; align-items: center; gap: 8px; }
+        .todo-source { color: #0078d4; cursor: pointer; }
+        .todo-source:hover { text-decoration: underline; }
+        .todo-add-row {
+            display: flex; align-items: center; gap: 12px; padding: 16px 0; margin-top: 8px;
+        }
+        .todo-add-row input {
+            flex: 1; padding: 10px 14px; border: 1px solid #d2d0ce;
+            border-radius: 6px; font-size: 14px; outline: none;
+        }
+        .todo-add-row input:focus { border-color: #0078d4; }
+
+        /* ─── Calendar Full Page ─── */
+        .cal-page { max-width: 800px; margin: 0 auto; padding: 0 32px; }
+        .cal-date-header { font-size: 22px; font-weight: 700; padding: 24px 0 16px; color: #323130; }
+        .cal-timeline { position: relative; }
+        .cal-hour-row {
+            display: flex; min-height: 64px; border-top: 1px solid #f0f0f0;
+        }
+        .cal-hour-label {
+            width: 64px; flex-shrink: 0; font-size: 12px; color: #605e5c;
+            padding-top: 4px; text-align: right; padding-right: 16px;
+        }
+        .cal-hour-content { flex: 1; position: relative; padding: 4px 0; }
+        .cal-event {
+            padding: 10px 14px; background: #e1f2ff; border-left: 4px solid #0078d4;
+            border-radius: 4px; margin-bottom: 4px; cursor: default;
+        }
+        .cal-event.urgent { background: #fde7e9; border-left-color: #d13438; }
+        .cal-event-title { font-size: 13px; font-weight: 600; color: #323130; }
+        .cal-event-meta { font-size: 12px; color: #605e5c; margin-top: 2px; }
+        .cal-event.from-email { background: #f3f0ff; border-left-color: #6c5ce7; }
+        .cal-event-source {
+            font-size: 11px; color: #6c5ce7; margin-top: 4px; cursor: pointer;
+        }
+        .cal-event-source:hover { text-decoration: underline; }
+
+        /* ─── Auth Modal ─── */
+        .auth-modal {
+            background: white; border-radius: 16px; width: 440px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25); overflow: hidden;
+        }
+        .auth-modal-top {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            padding: 32px 32px 24px; color: white; text-align: center;
+        }
+        .auth-modal-top .auth-icon { font-size: 48px; margin-bottom: 12px; }
+        .auth-modal-top h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .auth-modal-top p { font-size: 13px; opacity: 0.85; }
+        .auth-modal-body { padding: 24px 32px; }
+        .auth-modal-body p { font-size: 13px; color: #605e5c; margin-bottom: 16px; }
+        .auth-perm-list { list-style: none; margin-bottom: 20px; }
+        .auth-perm-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+            border: 1px solid #e1e1e1; border-radius: 8px; margin-bottom: 8px;
+            transition: all 0.15s; cursor: default;
+        }
+        .auth-perm-item:hover { border-color: #0078d4; background: #f8fbff; }
+        .auth-perm-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+        .auth-perm-text { flex: 1; }
+        .auth-perm-name { font-size: 14px; font-weight: 600; color: #323130; }
+        .auth-perm-desc { font-size: 12px; color: #605e5c; margin-top: 2px; }
+        .auth-perm-check { color: #0078d4; font-size: 18px; flex-shrink: 0; }
+        .auth-modal-footer { padding: 0 32px 28px; display: flex; flex-direction: column; gap: 8px; }
+        .auth-progress { padding: 0 32px 28px; display: none; flex-direction: column; align-items: center; gap: 12px; }
+        .auth-progress-bar { width: 100%; height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden; }
+        .auth-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #7c5cfc, #b06cff); border-radius: 3px; transition: width 0.4s ease; }
+        .auth-progress-text { font-size: 13px; color: #605e5c; text-align: center; }
+        .auth-btn {
+            width: 100%; padding: 12px; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
+        }
+        .auth-btn.primary { background: #0078d4; color: white; }
+        .auth-btn.primary:hover { background: #106ebe; }
+        .auth-btn.primary:disabled { opacity: 0.6; cursor: wait; }
+        .auth-btn.secondary { background: none; color: #605e5c; border: 1px solid #d2d0ce; }
+        .auth-btn.secondary:hover { background: #f5f5f5; }
+        /* ─── Modal ─── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; width: 520px; max-height: 90vh;
+            overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 24px; border-bottom: 1px solid #e1e1e1;
+        }
+        .modal-header h3 { font-size: 16px; font-weight: 600; }
+        .modal-close {
+            background: none; border: none; font-size: 20px; cursor: pointer;
+            color: #605e5c; padding: 0 4px;
+        }
+        .modal-close:hover { color: #323130; }
+        .modal-body { padding: 20px 24px; }
+        .modal-field { margin-bottom: 16px; }
+        .modal-field label {
+            display: block; font-size: 12px; font-weight: 600; color: #605e5c;
+            margin-bottom: 6px;
+        }
+        .modal-field input, .modal-field textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid #d2d0ce;
+            border-radius: 6px; font-size: 14px; font-family: inherit;
+            outline: none; transition: border-color 0.15s;
+        }
+        .modal-field input:focus, .modal-field textarea:focus { border-color: #0078d4; }
+        .modal-field textarea { min-height: 120px; resize: vertical; }
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 8px;
+            padding: 16px 24px; border-top: 1px solid #e1e1e1;
+        }
+        .modal-btn {
+            padding: 8px 20px; border-radius: 6px; font-size: 13px;
+            font-weight: 600; cursor: pointer; border: 1px solid #d2d0ce;
+            background: white; transition: all 0.15s;
+        }
+        .modal-btn:hover { background: #f5f5f5; }
+        .modal-btn.primary { background: #0078d4; color: white; border-color: #0078d4; }
+        .modal-btn.primary:hover { background: #106ebe; }
+        .modal-btn:disabled { opacity: 0.6; cursor: wait; }
+        .modal-hint {
+            font-size: 11px; color: #a0a0a0; margin-top: 4px;
+        }
+
+        /* ─── Contacts Page ─── */
+        .contacts-page { max-width: 800px; margin: 0 auto; padding: 0 32px; }
+        .contacts-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 0 16px;
+        }
+        .contacts-header h2 { font-size: 22px; font-weight: 700; color: #323130; }
+        .contacts-search {
+            padding: 8px 14px; border: 1px solid #d2d0ce; border-radius: 6px;
+            font-size: 13px; width: 240px; outline: none; font-family: inherit;
+        }
+        .contacts-search:focus { border-color: #0078d4; }
+        .contact-card {
+            display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+            border: 1px solid #f0f0f0; border-radius: 8px; margin-bottom: 8px;
+            transition: all 0.15s; cursor: default;
+        }
+        .contact-card:hover { border-color: #d2d0ce; background: #fafafa; }
+        .contact-avatar {
+            width: 42px; height: 42px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-weight: 600;
+            font-size: 15px; color: white; flex-shrink: 0;
+        }
+        .contact-info { flex: 1; min-width: 0; }
+        .contact-name { font-size: 14px; font-weight: 600; color: #323130; display: flex; align-items: center; gap: 6px; }
+        .contact-email { font-size: 12px; color: #605e5c; margin-top: 2px; }
+        .contact-meta { font-size: 11px; color: #a0a0a0; margin-top: 4px; }
+        .contact-vip-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 600; background: #fff4e5; color: #e67e00;
+        }
+        .contact-muted-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 600; background: #f0f0f0; color: #605e5c;
+        }
+        .contact-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .contact-action-btn {
+            padding: 6px 10px; border: 1px solid #d2d0ce; border-radius: 6px;
+            background: white; cursor: pointer; font-size: 11px; transition: all 0.15s;
+        }
+        .contact-action-btn:hover { background: #f5f5f5; }
+        .contact-action-btn.vip-active { border-color: #e67e00; background: #fff4e5; color: #e67e00; }
+        .contact-action-btn.muted-active { border-color: #605e5c; background: #f0f0f0; color: #605e5c; }
+
+        /* ─── Toggle Switch ─── */
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; cursor: pointer; inset: 0; background: #c8c8c8;
+            border-radius: 24px; transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background: white; border-radius: 50%; transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: #0078d4; }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* ─── Tag Input ─── */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+        .tag-item {
+            display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+            border-radius: 16px; font-size: 12px; font-weight: 500;
+        }
+        .tag-item.vip { background: #fff4e5; color: #e67e00; border: 1px solid #ffe0b2; }
+        .tag-item.muted { background: #f0f0f0; color: #605e5c; border: 1px solid #d2d0ce; }
+        .tag-remove {
+            background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1;
+            color: inherit; opacity: 0.6; padding: 0 2px;
+        }
+        .tag-remove:hover { opacity: 1; }
+        .tag-input {
+            flex: 1; padding: 8px 12px; border: 1px solid #d2d0ce; border-radius: 6px;
+            font-size: 13px; outline: none; font-family: inherit;
+        }
+        .tag-input:focus { border-color: #0078d4; }
+
+        /* ─── Success Toast ─── */
+        .success-toast {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; border-radius: 16px; box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+            z-index: 2000; width: 360px; overflow: hidden; animation: toast-in 0.25s ease-out;
+        }
+        .success-toast.open { display: block; }
+        .success-toast-bg {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1999;
+        }
+        .success-toast-bg.open { display: block; }
+        @keyframes toast-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        .toast-icon { text-align: center; padding: 28px 0 8px; font-size: 48px; }
+        .toast-msg { text-align: center; font-size: 16px; font-weight: 600; color: #323130; padding: 0 24px; }
+        .toast-actions { display: flex; gap: 8px; padding: 20px 24px 24px; justify-content: center; }
+        .toast-btn {
+            padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.15s;
+        }
+        .toast-btn.primary { background: #0078d4; color: white; }
+        .toast-btn.primary:hover { background: #106ebe; }
+        .toast-btn.secondary { background: #f0f0f0; color: #323130; }
+        .toast-btn.secondary:hover { background: #e6e6e6; }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100%; color: #605e5c; padding: 40px;
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+
+        /* ─── Scrollbar ─── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="outlook-container">
+        <div class="header-bar">
+            <div class="logo">📬 Outlook</div>
+            <div class="search-box">
+                <input type="text" placeholder="Search emails, contacts, files...">
+            </div>
+            <div class="user-info">
+                <span id="userName">Alex Chen</span>
+                <div class="avatar" id="userAvatar">AC</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <button class="new-email-btn">✏️ New Email</button>
+                <button class="ai-btn off" id="aiBtn" onclick="onAiStatusClick()">
+                    <span class="ai-btn-dot off" id="aiBtnDot"></span>
+                    <span id="aiBtnText">🤖 AI Assistant</span>
+                    <span class="ai-btn-gear" id="aiBtnGear" style="display:none;">⚙️</span>
+                </button>
+                <div class="folder-list">
+                    <div class="folder-item active" data-view="email">
+                        <span>📥</span><span>Inbox</span>
+                        <span class="folder-badge" id="inboxBadge">0</span>
+                    </div>
+                    <div class="folder-item" data-view="todo">
+                        <span>✅</span><span>To-Do</span>
+                        <span class="folder-badge" id="todoBadge">0</span>
+                    </div>
+                    <div class="folder-item" data-view="calendar">
+                        <span>📅</span><span>Calendar</span>
+                    </div>
+                    <div class="folder-item" data-view="contacts">
+                        <span>👥</span><span>Contacts</span>
+                    </div>
+                    <div class="folder-item"><span>📤</span><span>Sent</span></div>
+                    <div class="folder-item"><span>📝</span><span>Drafts</span></div>
+                    <div class="folder-item"><span>🗑️</span><span>Deleted</span></div>
+                </div>
+                <button class="test-email-btn" onclick="openTestModal()">🧪 Add Test Email</button>
+            </div>
+
+            <!-- Email View (3 panels) -->
+            <div id="emailViewPanels" style="display:flex;flex:1;overflow:hidden;">
+                <div class="email-list-container">
+                    <div class="email-tabs">
+                        <div class="email-tab active" data-tab="all">All</div>
+                        <div class="email-tab" data-tab="act_now">Act Now</div>
+                        <div class="email-tab" data-tab="later">Later</div>
+                        <div class="email-tab" data-tab="ignore">Ignore</div>
+                        <div class="email-tab" data-tab="handled">Handled</div>
+                    </div>
+                    <div class="email-list" id="emailList"></div>
+                    <div class="resize-handle" id="resizeHandle"></div>
+                </div>
+                <div class="content-area">
+                    <div class="content-body" id="contentBody"></div>
+                </div>
+                <div class="agent-sidebar hidden" id="agentSidebar">
+                    <div class="agent-sidebar-header">
+                    <span>🤖 Email Agent</span>
+                    <button class="agent-close-btn" onclick="closeAgentPanel()" title="Close">✕</button>
+                </div>
+                    <div class="agent-sidebar-body" id="agentSidebarBody"></div>
+                </div>
+            </div>
+
+            <!-- Full-page View (Todo / Calendar) -->
+            <div id="fullPageView" style="display:none;flex:1;overflow-y:auto;background:white;"></div>
+        </div>
+    </div>
+
+    <!-- Agent Floating Ball -->
+    <button class="agent-fab" id="agentFab" onclick="openAgentPanel()" title="Open Email Agent">🤖</button>
+
+    <!-- Success Toast -->
+    <div class="success-toast-bg" id="toastBg" onclick="closeToast()"></div>
+    <div class="success-toast" id="successToast">
+        <div class="toast-icon" id="toastIcon">✅</div>
+        <div class="toast-msg" id="toastMsg">Added successfully</div>
+        <div class="toast-actions">
+            <button class="toast-btn secondary" onclick="closeToast()">OK</button>
+            <button class="toast-btn primary" id="toastViewBtn" onclick="toastNavigate()">View →</button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="auth-modal">
+            <div class="auth-modal-top">
+                <div class="auth-icon">🤖</div>
+                <h2>Meet Your Email Agent</h2>
+                <p>Let AI handle the noise — so you can focus on what actually matters</p>
+            </div>
+            <div class="auth-modal-body">
+                <p>Here's what it'll help you with:</p>
+                <ul class="auth-perm-list">
+                    <li class="auth-perm-item">
+                        <div class="auth-perm-icon">📥</div>
+                        <div class="auth-perm-text">
+                            <div class="auth-perm-name">Inbox</div>
+                            <div class="auth-perm-desc">Sort through your emails and surface what needs attention first</div>
+                        </div>
+                        <div class="auth-perm-check">✓</div>
+                    </li>
+                    <li class="auth-perm-item">
+                        <div class="auth-perm-icon">👥</div>
+                        <div class="auth-perm-text">
+                            <div class="auth-perm-name">Contacts</div>
+                            <div class="auth-perm-desc">Know who's writing — your boss gets priority over a newsletter</div>
+                        </div>
+                        <div class="auth-perm-check">✓</div>
+                    </li>
+                    <li class="auth-perm-item">
+                        <div class="auth-perm-icon">📅</div>
+                        <div class="auth-perm-text">
+                            <div class="auth-perm-name">Calendar</div>
+                            <div class="auth-perm-desc">Spot conflicts and deadlines hiding in your emails</div>
+                        </div>
+                        <div class="auth-perm-check">✓</div>
+                    </li>
+                    <li class="auth-perm-item">
+                        <div class="auth-perm-icon">✅</div>
+                        <div class="auth-perm-text">
+                            <div class="auth-perm-name">To-Do</div>
+                            <div class="auth-perm-desc">Turn actionable emails into tasks — never miss a thing</div>
+                        </div>
+                        <div class="auth-perm-check">✓</div>
+                    </li>
+                </ul>
+            </div>
+            <div class="auth-modal-footer" id="authFooter">
+                <button class="auth-btn primary" id="authGrantBtn" onclick="grantAuth()">Let's Go 🚀</button>
+                <button class="auth-btn secondary" onclick="skipAuth()">Maybe Later</button>
+            </div>
+            <div class="auth-progress" id="authProgress" style="display:none;">
+                <div class="auth-progress-bar"><div class="auth-progress-fill" id="authProgressFill"></div></div>
+                <div class="auth-progress-text" id="authProgressText">Connecting to AI service...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Email Modal -->
+    <div class="modal-overlay" id="testEmailModal">
+        <div class="modal" style="max-width:580px;">
+            <div class="modal-header">
+                <h3>📩 Add Test Email</h3>
+                <button class="modal-close" onclick="closeTestModal()">✕</button>
+            </div>
+            <div style="display:flex;border-bottom:1px solid #edebe9;">
+                <div class="test-tab active" data-testtab="single" onclick="switchTestTab('single')">Single</div>
+                <div class="test-tab" data-testtab="batch" onclick="switchTestTab('batch')">Batch (Markdown)</div>
+            </div>
+            <!-- Single mode -->
+            <div class="modal-body" id="testSinglePane">
+                <div class="modal-field">
+                    <label>Sender Name</label>
+                    <input id="testFromName" placeholder="e.g. James Park (VP of Engineering)">
+                </div>
+                <div class="modal-field">
+                    <label>Sender Email</label>
+                    <input id="testFromEmail" placeholder="e.g. james.park@company.com">
+                </div>
+                <div class="modal-field">
+                    <label>Subject</label>
+                    <input id="testSubject" placeholder="e.g. URGENT: System outage needs immediate attention">
+                </div>
+                <div class="modal-field">
+                    <label>Body</label>
+                    <textarea id="testBody" placeholder="Enter email content here..."></textarea>
+                </div>
+                <div class="modal-hint">After submission, AI analysis will be triggered automatically.</div>
+            </div>
+            <!-- Batch mode -->
+            <div class="modal-body" id="testBatchPane" style="display:none;">
+                <div class="modal-field">
+                    <label>Paste Markdown — one or more emails</label>
+                    <textarea id="testBatchInput" style="min-height:220px;font-family:monospace;font-size:12px;" placeholder="## Email 1&#10;- From: Sarah Wong (VP of Engineering) &lt;sarah@techcorp.com&gt;&#10;- Subject: Need Q2 headcount by EOD&#10;&#10;Hi Alex, please send me the numbers today.&#10;&#10;---&#10;&#10;## Email 2&#10;- From: GitHub Notifications &lt;noreply@github.com&gt;&#10;- Subject: [repo] CI Build #1234 passed&#10;&#10;Build passed all checks."></textarea>
+                </div>
+                <div class="modal-hint" style="margin-top:4px;">
+                    Format: each email starts with <code>##</code> heading, followed by <code>- From:</code> and <code>- Subject:</code> lines, then blank line + body. Separate emails with <code>---</code>. Optional: <code>- To:</code>, <code>- CC:</code>.
+                </div>
+                <div id="batchPreview" style="display:none;margin-top:10px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeTestModal()">Cancel</button>
+                <button class="modal-btn" id="batchPreviewBtn" style="display:none;" onclick="previewBatchEmails()">👁 Preview</button>
+                <button class="modal-btn primary" id="testSubmitBtn" onclick="submitTestEmail()">Send & Analyze</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <div class="modal-overlay" id="aiSettingsModal">
+        <div class="modal" style="width:520px;">
+            <div class="modal-header">
+                <h3>⚙️ AI Assistant Settings</h3>
+                <button class="modal-close" onclick="closeAiSettings()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:20px 24px;">
+                <!-- Auto-extract toggle -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f0f0f0;">
+                    <div>
+                        <div style="font-size:14px;font-weight:600;color:#323130;">Auto-extract To-Do</div>
+                        <div style="font-size:12px;color:#605e5c;margin-top:2px;">Automatically extract action items from Act Now emails</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="settingAutoExtract" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Contact Rules -->
+                <div style="padding:16px 0;border-bottom:1px solid #f0f0f0;">
+                    <div style="font-size:14px;font-weight:600;color:#323130;margin-bottom:4px;">Contact Rules</div>
+                    <div style="font-size:12px;color:#605e5c;margin-bottom:12px;">VIP contacts will never be classified as Ignore (minimum: Later)</div>
+                    <div style="display:flex;gap:12px;">
+                        <div style="flex:1;padding:12px;background:#fff9f0;border-radius:8px;border:1px solid #ffe0b2;">
+                            <div style="font-size:13px;font-weight:600;color:#e67e00;">⭐ VIP: <span id="vipCount">0</span></div>
+                            <div style="font-size:11px;color:#605e5c;margin-top:2px;">Never Ignore</div>
+                        </div>
+                        <div style="flex:1;padding:12px;background:#f5f5f5;border-radius:8px;border:1px solid #d2d0ce;">
+                            <div style="font-size:13px;font-weight:600;color:#605e5c;">🔇 Muted: <span id="mutedCount">0</span></div>
+                            <div style="font-size:11px;color:#605e5c;margin-top:2px;">Always Ignore</div>
+                        </div>
+                    </div>
+                    <button class="modal-btn" style="margin-top:10px;width:100%;text-align:center;color:#0078d4;border-color:#0078d4;" onclick="closeAiSettings();goToContacts();">👥 Manage in Contacts</button>
+                </div>
+
+                <!-- Re-evaluate -->
+                <div style="padding:16px 0;border-bottom:1px solid #edebe9;">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Priority Re-evaluation</div>
+                    <div style="font-size:12px;color:#605e5c;margin-bottom:10px;">Re-assess all Later emails with current context. Runs automatically daily at 9:00 AM.</div>
+                    <button class="modal-btn" id="reEvalBtn" onclick="reEvalFromSettings()" style="width:100%;text-align:center;color:#7c5cfc;border-color:#7c5cfc;">🔄 Re-evaluate Now</button>
+                </div>
+
+                <!-- Turn Off -->
+                <div style="padding:16px 0;">
+                    <div style="font-size:14px;font-weight:600;color:#d13438;margin-bottom:4px;">Turn Off AI</div>
+                    <div style="font-size:12px;color:#605e5c;margin-bottom:10px;">Stop analyzing new emails. Existing classifications, to-do items, and calendar events will be preserved.</div>
+                    <button class="modal-btn" onclick="confirmTurnOffAi()" style="color:#d13438;border-color:#d13438;">⏸️ Turn Off AI Service</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeAiSettings()">Cancel</button>
+                <button class="modal-btn primary" onclick="saveAiSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Turn Off AI Confirm Modal -->
+    <div class="modal-overlay" id="turnOffConfirmModal">
+        <div class="modal" style="width:420px;">
+            <div class="modal-header">
+                <h3>⏸️ Turn Off AI Service</h3>
+                <button class="modal-close" onclick="document.getElementById('turnOffConfirmModal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:24px 32px;">
+                <div style="font-size:14px;color:#323130;line-height:1.8;">
+                    AI will stop analyzing new incoming emails.<br>
+                    All existing classifications, to-do items, and calendar events will be <strong>preserved</strong>.
+                </div>
+                <div style="font-size:12px;color:#a0a0a0;margin-top:12px;">You can re-enable AI anytime from the AI Assistant button.</div>
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="modal-btn" onclick="document.getElementById('turnOffConfirmModal').classList.remove('open')">Cancel</button>
+                <button class="modal-btn" style="color:#d13438;border-color:#d13438;" onclick="turnOffAi()">Turn Off</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Override Confirm Modal -->
+    <div class="modal-overlay" id="confirmOverrideModal">
+        <div class="modal" style="width:400px;">
+            <div class="modal-header">
+                <h3>⚠️ Override AI Priority</h3>
+                <button class="modal-close" onclick="cancelOverride()">✕</button>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:24px 32px;">
+                <div style="font-size:14px;color:#323130;line-height:1.8;">
+                    Are you sure you want to change priority from<br>
+                    <strong id="confirmFromPri" style="color:#605e5c;">—</strong>
+                    &nbsp;→&nbsp;
+                    <strong id="confirmToPri" style="color:#0078d4;">—</strong> ?
+                </div>
+                <div style="font-size:12px;color:#a0a0a0;margin-top:12px;">This will override the AI classification for this email.</div>
+            </div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="modal-btn" onclick="cancelOverride()">Cancel</button>
+                <button class="modal-btn primary" onclick="confirmOverride()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+let emails = [];
+let classifications = {};
+let actionsCache = {};
+let todos = [];
+let currentTab = 'all';
+let currentEmail = null;
+let currentView = 'email';
+let todoFilter = 'active';
+let agentPanelOpen = false;
+let priorityOverrides = {};
+let addedTodoEmails = {};
+let addedCalEmails = {};
+let handledEmails = {};
+
+let contacts = [];
+let contactsSearch = '';
+
+let events = [
+    { id: 1, time: '10:00-10:30', title: '1:1 with James (Direct Report)', attendees: 'james.park@techcorp.com', fromEmail: false },
+    { id: 2, time: '14:00-15:00', title: 'Q2 Planning Review', attendees: 'sarah.wong, david.kim', fromEmail: false },
+    { id: 3, time: '16:00-16:30', title: 'Database Migration Go/No-Go', attendees: 'lisa.zhang, ryan.ma', fromEmail: false },
+];
+
+async function init() {
+    try {
+        const res = await fetch('/api/emails');
+        const data = await res.json();
+        emails = data.emails;
+        document.getElementById('userName').textContent = data.user_context.user_name;
+        document.getElementById('userAvatar').textContent = data.user_context.user_name.split(' ').map(w => w[0]).join('');
+        localStorage.removeItem('agent_authorized');
+        updateAiStatus();
+        renderEmailList();
+        renderContent();
+        renderAgentPanel();
+
+        document.getElementById('authModal').classList.add('open');
+    } catch (e) {
+        console.error('Failed to load emails:', e);
+    }
+}
+
+let aiSettings = { whitelist: [], blacklist: [], autoExtract: true };
+
+function updateAiStatus() {
+    const btn = document.getElementById('aiBtn');
+    const dot = document.getElementById('aiBtnDot');
+    const text = document.getElementById('aiBtnText');
+    const gear = document.getElementById('aiBtnGear');
+    if (localStorage.getItem('agent_authorized')) {
+        btn.classList.remove('off');
+        btn.classList.add('on');
+        dot.classList.remove('off');
+        dot.classList.add('on');
+        text.textContent = '🤖 AI Assistant';
+        gear.style.display = '';
+    } else {
+        btn.classList.remove('on');
+        btn.classList.add('off');
+        dot.classList.remove('on');
+        dot.classList.add('off');
+        text.textContent = '🤖 AI Assistant';
+        gear.style.display = 'none';
+    }
+}
+
+function onAiStatusClick() {
+    if (!localStorage.getItem('agent_authorized')) {
+        document.getElementById('authModal').classList.add('open');
+    } else {
+        openAiSettings();
+    }
+}
+
+function openAiSettings() {
+    document.getElementById('settingAutoExtract').checked = aiSettings.autoExtract;
+    document.getElementById('vipCount').textContent = aiSettings.whitelist.length;
+    document.getElementById('mutedCount').textContent = aiSettings.blacklist.length;
+    document.getElementById('aiSettingsModal').classList.add('open');
+}
+
+function goToContacts() {
+    document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('.folder-item[data-view="contacts"]').classList.add('active');
+    switchView('contacts');
+}
+
+function closeAiSettings() {
+    document.getElementById('aiSettingsModal').classList.remove('open');
+}
+
+function saveAiSettings() {
+    aiSettings.autoExtract = document.getElementById('settingAutoExtract').checked;
+    closeAiSettings();
+    renderEmailList();
+    renderAgentPanel();
+}
+
+function renderTagList(containerId, list, cls) {
+    const c = document.getElementById(containerId);
+    c.innerHTML = list.map((t, i) =>
+        `<span class="tag-item ${cls}">${t}<button class="tag-remove" onclick="removeTag('${containerId === 'whitelistTags' ? 'whitelist' : 'blacklist'}',${i})">×</button></span>`
+    ).join('');
+}
+
+function addTag(listName, inputId) {
+    const input = document.getElementById(inputId);
+    const val = input.value.trim();
+    if (!val) return;
+    if (aiSettings[listName].includes(val)) { input.value = ''; return; }
+
+    const otherList = listName === 'whitelist' ? 'blacklist' : 'whitelist';
+    aiSettings[otherList] = aiSettings[otherList].filter(t => t !== val);
+
+    aiSettings[listName].push(val);
+    input.value = '';
+    const tagCls = listName === 'whitelist' ? 'vip' : 'muted';
+    renderTagList(listName === 'whitelist' ? 'whitelistTags' : 'blacklistTags', aiSettings[listName], tagCls);
+    if (listName === 'whitelist') renderTagList('blacklistTags', aiSettings.blacklist, 'muted');
+    else renderTagList('whitelistTags', aiSettings.whitelist, 'vip');
+}
+
+function removeTag(listName, idx) {
+    aiSettings[listName].splice(idx, 1);
+    const tagCls = listName === 'whitelist' ? 'vip' : 'muted';
+    renderTagList(listName === 'whitelist' ? 'whitelistTags' : 'blacklistTags', aiSettings[listName], tagCls);
+}
+
+function confirmTurnOffAi() {
+    closeAiSettings();
+    document.getElementById('turnOffConfirmModal').classList.add('open');
+}
+
+function turnOffAi() {
+    document.getElementById('turnOffConfirmModal').classList.remove('open');
+    localStorage.removeItem('agent_authorized');
+    agentPanelOpen = false;
+    currentTab = 'all';
+    document.querySelectorAll('.email-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'all'));
+    updateAiStatus();
+    renderEmailList();
+    renderAgentPanel();
+}
+
+function resetAgent() {
+    classifications = {};
+    actionsCache = {};
+    priorityOverrides = {};
+    addedTodoEmails = {};
+    addedCalEmails = {};
+    handledEmails = {};
+    todos = [];
+    aiSettings = { whitelist: [], blacklist: [], autoExtract: true };
+    contacts = [];
+    contactsSearch = '';
+    currentEmail = null;
+    agentPanelOpen = false;
+    localStorage.removeItem('agent_authorized');
+
+    updateAiStatus();
+    renderEmailList();
+    renderContent();
+    renderAgentPanel();
+
+    document.getElementById('authFooter').style.display = '';
+    document.getElementById('authProgress').style.display = 'none';
+    document.getElementById('authProgressFill').style.width = '0%';
+
+    document.getElementById('authModal').classList.add('open');
+}
+
+async function grantAuth() {
+    const footer = document.getElementById('authFooter');
+    const progress = document.getElementById('authProgress');
+    const fill = document.getElementById('authProgressFill');
+    const text = document.getElementById('authProgressText');
+
+    footer.style.display = 'none';
+    progress.style.display = 'flex';
+
+    localStorage.setItem('agent_authorized', '1');
+    updateAiStatus();
+
+    fill.style.width = '15%';
+    text.textContent = 'Connecting to AI service...';
+
+    try {
+        fill.style.width = '30%';
+        text.textContent = 'Analyzing recent emails...';
+
+        const res = await fetch('/api/classify-all?limit=10', { method: 'POST' });
+        const data = await res.json();
+        Object.assign(classifications, data);
+
+        fill.style.width = '70%';
+        text.textContent = 'Classifying priorities...';
+        renderEmailList();
+        renderAgentPanel();
+
+        if (aiSettings.autoExtract) {
+            const urgentIds = Object.entries(data)
+                .filter(([, cl]) => cl.priority === 'act_now')
+                .map(([id]) => id);
+
+            if (urgentIds.length > 0) {
+                fill.style.width = '85%';
+                text.textContent = 'Extracting action items...';
+                await Promise.all(urgentIds.map(id => autoExtractAndAddTodos(id)));
+                renderAgentPanel();
+            }
+        }
+
+        fill.style.width = '100%';
+        text.textContent = 'All done! 🎉';
+        await new Promise(r => setTimeout(r, 600));
+
+        classifyRemaining();
+
+    } catch (e) {
+        console.error('classify-all failed:', e);
+        fill.style.width = '100%';
+        fill.style.background = '#e74c3c';
+        text.textContent = 'Something went wrong, please try again';
+        await new Promise(r => setTimeout(r, 1200));
+    }
+
+    document.getElementById('authModal').classList.remove('open');
+    footer.style.display = '';
+    progress.style.display = 'none';
+    fill.style.width = '0%';
+    fill.style.background = '';
+
+    currentTab = 'act_now';
+    document.querySelectorAll('.email-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'act_now'));
+    renderEmailList();
+
+    setTimeout(checkDailyReEval, 5000);
+}
+
+async function reEvalFromSettings() {
+    const btn = document.getElementById('reEvalBtn');
+    btn.disabled = true;
+    btn.textContent = '🔄 Re-evaluating...';
+    await reEvaluateLater(true);
+    btn.disabled = false;
+    btn.textContent = '🔄 Re-evaluate Now';
+}
+
+async function reEvaluateLater(manual = false) {
+    try {
+        const res = await fetch('/api/re-evaluate-later', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.classifications) {
+            Object.assign(classifications, data.classifications);
+            renderEmailList();
+            if (currentEmail && agentPanelOpen) renderAgentPanel();
+        }
+
+        localStorage.setItem('last_re_eval_date', new Date().toDateString());
+
+        if (data.changed && data.changed.length > 0) {
+            const upgraded = data.changed.filter(c => c.new_priority === 'act_now');
+            if (upgraded.length > 0) {
+                showSuccessToast(`🔔 ${upgraded.length} email(s) upgraded to Act Now`, 'todo');
+            }
+        }
+
+        if (manual && (!data.changed || data.changed.length === 0)) {
+            showSuccessToast(`✅ Re-evaluated ${data.total_re_evaluated} emails — no changes`, 'todo');
+        }
+    } catch (e) {
+        console.error('re-evaluate failed:', e);
+    }
+}
+
+function checkDailyReEval() {
+    if (!localStorage.getItem('agent_authorized')) return;
+    const lastDate = localStorage.getItem('last_re_eval_date');
+    const today = new Date().toDateString();
+    if (lastDate === today) return;
+    const now = new Date();
+    if (now.getHours() >= 9) {
+        reEvaluateLater();
+    }
+}
+
+async function classifyRemaining() {
+    try {
+        const res = await fetch('/api/classify-all', { method: 'POST' });
+        const data = await res.json();
+        Object.assign(classifications, data);
+        renderEmailList();
+        if (currentEmail && agentPanelOpen) renderAgentPanel();
+
+        if (aiSettings.autoExtract) {
+            const newUrgent = Object.entries(data)
+                .filter(([id, cl]) => cl.priority === 'act_now' && !addedTodoEmails[id] && !actionsCache[id])
+                .map(([id]) => id);
+            if (newUrgent.length > 0) {
+                await Promise.all(newUrgent.map(id => autoExtractAndAddTodos(id)));
+                if (currentEmail && agentPanelOpen) renderAgentPanel();
+            }
+        }
+    } catch (e) {
+        console.error('classify-remaining failed:', e);
+    }
+}
+
+function navigateToView(view) {
+    document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
+    const target = document.querySelector(`.folder-item[data-view="${view}"]`);
+    if (target) target.classList.add('active');
+    switchView(view);
+}
+
+function skipAuth() {
+    document.getElementById('authModal').classList.remove('open');
+}
+
+function getEmailPriority(email) {
+    if (priorityOverrides[email.id]) return priorityOverrides[email.id];
+
+    const senderName = (email.sender || '').toLowerCase();
+    const senderEmail = (email.email || '').toLowerCase();
+    const isVip = aiSettings.whitelist.some(w => senderName.includes(w.toLowerCase()) || senderEmail.includes(w.toLowerCase()));
+    if (aiSettings.blacklist.some(b => senderName.includes(b.toLowerCase()) || senderEmail.includes(b.toLowerCase()))) return 'ignore';
+
+    const aiPri = classifications[email.id] ? (classifications[email.id].priority || 'unknown') : 'unknown';
+    if (isVip && (aiPri === 'ignore' || aiPri === 'unknown')) return 'later';
+    return aiPri;
+}
+
+function renderEmailList() {
+    let filtered;
+    if (currentTab === 'handled') {
+        filtered = emails.filter(e => handledEmails[e.id]);
+    } else if (currentTab === 'all') {
+        filtered = emails.filter(e => !handledEmails[e.id]);
+    } else {
+        filtered = emails.filter(e => !handledEmails[e.id] && getEmailPriority(e) === currentTab);
+    }
+
+    const list = document.getElementById('emailList');
+    const emptyMsg = { act_now: 'No Act Now emails', later: 'No Later emails', ignore: 'No Ignore emails', handled: 'No handled emails yet', all: '' };
+    if (filtered.length === 0 && currentTab !== 'all') {
+        list.innerHTML = `<div style="text-align:center;padding:40px;color:#605e5c;">
+            <div style="font-size:32px;margin-bottom:12px;">${currentTab === 'handled' ? '✅' : '📭'}</div>
+            <div>${emptyMsg[currentTab] || 'No emails'}</div>
+        </div>`;
+    } else {
+        list.innerHTML = filtered.map(e => {
+            const pri = getEmailPriority(e);
+            const isHandled = !!handledEmails[e.id];
+            return `<div class="email-item ${e.unread && !isHandled ? 'unread' : ''} ${currentEmail && currentEmail.id === e.id ? 'selected' : ''} ${isHandled ? 'handled' : ''}"
+                         onclick="selectEmail('${e.id}')">
+                <div style="display:flex;align-items:flex-start;">
+                    <div class="unread-dot"></div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="email-sender">
+                            <span class="sender-name">${e.sender}</span>
+                            <span class="email-time">${e.time}</span>
+                        </div>
+                        <div class="email-subject">${e.subject}</div>
+                        <div class="email-preview">${e.preview}</div>
+                    </div>
+                </div>
+                ${isHandled ? '<div class="handled-dot" title="Handled">✅</div>' : `<div class="priority-dot ${pri}" title="${pri}"></div>`}
+            </div>`;
+        }).join('');
+    }
+
+    const handledCount = Object.keys(handledEmails).length;
+    const counts = { act_now: 0, later: 0, ignore: 0 };
+    emails.forEach(e => {
+        if (handledEmails[e.id]) return;
+        const p = getEmailPriority(e);
+        if (counts[p] !== undefined) counts[p]++;
+    });
+    document.getElementById('inboxBadge').textContent = emails.filter(e => e.unread && !handledEmails[e.id]).length;
+}
+
+function selectEmail(id) {
+    currentEmail = emails.find(e => e.id === id);
+    if (currentEmail && currentEmail.unread) {
+        currentEmail.unread = false;
+    }
+    agentPanelOpen = !!localStorage.getItem('agent_authorized');
+    renderEmailList();
+    renderContent();
+}
+
+function closeAgentPanel() {
+    agentPanelOpen = false;
+    updateAgentVisibility();
+}
+
+function openAgentPanel() {
+    if (currentEmail) {
+        agentPanelOpen = true;
+        updateAgentVisibility();
+        renderAgentPanel();
+    }
+}
+
+function updateAgentVisibility() {
+    const sidebar = document.getElementById('agentSidebar');
+    const fab = document.getElementById('agentFab');
+    if (currentEmail && agentPanelOpen) {
+        sidebar.classList.remove('hidden');
+        fab.classList.remove('visible');
+    } else if (currentEmail && !agentPanelOpen && localStorage.getItem('agent_authorized')) {
+        sidebar.classList.add('hidden');
+        fab.classList.add('visible');
+    } else {
+        sidebar.classList.add('hidden');
+        fab.classList.remove('visible');
+    }
+}
+
+function renderContent() {
+    const body = document.getElementById('contentBody');
+    renderEmailDetail(body);
+    renderAgentPanel();
+}
+
+function parseThreadMessages(body) {
+    const SEP = '---- Replied Message ----';
+    const parts = body.split(SEP);
+    if (parts.length < 2) return null;
+
+    const latestBody = parts[0].trim();
+    const older = [];
+
+    for (let i = 1; i < parts.length; i++) {
+        const raw = parts[i].trim();
+        const lines = raw.split('\n');
+        const meta = { from: '', date: '', to: '', cc: '', subject: '' };
+        let bodyStart = 0;
+
+        for (let j = 0; j < lines.length; j++) {
+            const line = lines[j];
+            if (line.startsWith('From    ')) { meta.from = line.substring(8).trim(); }
+            else if (line.startsWith('Date    ')) { meta.date = line.substring(8).trim(); }
+            else if (line.startsWith('To      ')) { meta.to = line.substring(8).trim(); }
+            else if (line.startsWith('Cc      ')) { meta.cc = line.substring(8).trim(); }
+            else if (line.startsWith('Subject ')) { meta.subject = line.substring(8).trim(); }
+            else if (line === '' && (meta.from || meta.date)) { bodyStart = j + 1; break; }
+        }
+
+        const msgBody = lines.slice(bodyStart).join('\n').trim();
+        const nameMatch = meta.from.match(/^(.+?)\s*</);
+        const name = nameMatch ? nameMatch[1].trim() : meta.from;
+        const emailMatch = meta.from.match(/<(.+?)>/);
+        const email = emailMatch ? emailMatch[1] : meta.from;
+
+        older.push({ name, email, date: meta.date, to: meta.to, cc: meta.cc, subject: meta.subject, body: msgBody });
+    }
+
+    return { latest: latestBody, older };
+}
+
+function renderEmailDetail(container) {
+    if (!currentEmail) {
+        container.innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">📧</div>
+            <div>Select an email to view details</div>
+        </div>`;
+        return;
+    }
+
+    const thread = (currentEmail.thread_length > 1) ? parseThreadMessages(currentEmail.body) : null;
+
+    let bodyHtml;
+    if (thread && thread.older.length > 0) {
+        const olderHtml = thread.older.map(m => `
+            <div class="thread-msg">
+                <div class="thread-msg-header">
+                    <div class="thread-msg-avatar">${m.name.charAt(0)}</div>
+                    <div>
+                        <div class="thread-msg-name">${m.name}</div>
+                        <div class="thread-msg-meta">
+                            ${m.date ? `<span>${m.date}</span>` : ''}
+                            ${m.to ? `<span>To: ${m.to}</span>` : ''}
+                            ${m.cc ? `<span>Cc: ${m.cc}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="thread-msg-body">${m.body}</div>
+            </div>
+        `).join('');
+
+        bodyHtml = `<div class="thread-view">
+            <div class="thread-msg" style="border-left-color:#7c5cfc;background:#faf8ff;border-radius:0 8px 8px 0;">
+                <div class="thread-msg-header">
+                    <div class="thread-msg-avatar" style="background:#7c5cfc;color:white;">${currentEmail.sender.charAt(0)}</div>
+                    <div>
+                        <div class="thread-msg-name">${currentEmail.sender} <span class="thread-msg-badge">Latest</span></div>
+                        <div class="thread-msg-meta"><span>${currentEmail.time}</span></div>
+                    </div>
+                </div>
+                <div class="thread-msg-body">${thread.latest}</div>
+            </div>
+            <button class="thread-toggle" onclick="var el=document.getElementById('threadOlder');el.classList.toggle('open');this.innerHTML=el.classList.contains('open')?'▼ Hide earlier messages (${thread.older.length})':'▶ Show earlier messages (${thread.older.length})'">
+                ▶ Show earlier messages (${thread.older.length})
+            </button>
+            <div class="thread-older" id="threadOlder">
+                ${olderHtml}
+            </div>
+        </div>`;
+    } else {
+        bodyHtml = `<div class="detail-body">${currentEmail.body}</div>`;
+    }
+
+    container.innerHTML = `
+        <div class="email-detail">
+            <div class="detail-header">
+                <div class="detail-subject">${currentEmail.subject}${currentEmail.thread_length > 1 ? ` <span style="font-size:12px;color:#7c5cfc;font-weight:500;background:#f0eaff;padding:2px 8px;border-radius:10px;margin-left:8px;">💬 ${currentEmail.thread_length} messages</span>` : ''}</div>
+                <div class="detail-meta">
+                    <div class="sender-avatar-lg">${currentEmail.sender.charAt(0)}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">${currentEmail.sender}</div>
+                        <div style="font-size:12px;color:#605e5c;">${currentEmail.email}</div>
+                    </div>
+                    <div style="font-size:12px;color:#605e5c;">${currentEmail.time}</div>
+                </div>
+            </div>
+            ${bodyHtml}
+            <div class="detail-actions">
+                <button class="action-btn">↩️ Reply</button>
+                <button class="action-btn">↩️ Reply All</button>
+                <button class="action-btn">↪️ Forward</button>
+            </div>
+        </div>`;
+}
+
+function renderAgentPanel() {
+    updateAgentVisibility();
+    const panel = document.getElementById('agentSidebarBody');
+
+    if (!currentEmail || !agentPanelOpen) {
+        return;
+    }
+
+    const cl = classifications[currentEmail.id];
+    const ac = actionsCache[currentEmail.id];
+
+    if (!cl) {
+        if (!localStorage.getItem('agent_authorized')) {
+            panel.innerHTML = `<div style="text-align:center;padding:20px;">
+                <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+                <div style="font-size:13px;color:#605e5c;">AI service is not enabled</div>
+                <div style="font-size:12px;color:#a0a0a0;margin-top:4px;">Enable AI via the authorization prompt to analyze emails</div>
+            </div>`;
+        } else {
+            panel.innerHTML = `<div style="text-align:center;padding:20px;">
+                <div style="font-size:13px;color:#605e5c;margin-bottom:16px;">This email has not been analyzed yet</div>
+                <button class="analyze-btn" onclick="classifySingle('${currentEmail.id}')" id="singleBtn_${currentEmail.id}">
+                    🤖 Analyze This Email
+                </button>
+            </div>`;
+        }
+        return;
+    }
+
+    if (cl.error) {
+        panel.innerHTML = `<div style="padding:4px;">
+            <div class="agent-error">❌ ${cl.error}</div>
+            <button class="analyze-btn" style="margin-top:12px;" onclick="classifySingle('${currentEmail.id}')">🔄 Retry</button>
+        </div>`;
+        return;
+    }
+
+    const priLabel = { act_now: '🔴 Act Now', later: '🟡 Later', ignore: '🟢 Ignore' };
+    const respTime = { act_now: '< 1h', later: '< 24h', ignore: '> 24h' };
+    const effectivePri = priorityOverrides[currentEmail.id] || cl.priority;
+    const isOverridden = !!priorityOverrides[currentEmail.id] && priorityOverrides[currentEmail.id] !== cl.priority;
+
+    const summaryText = cl.summary || (ac && ac.summary) || null;
+
+    let html = `
+        ${summaryText ? `<div style="margin-bottom:12px;padding:10px 14px;background:linear-gradient(135deg,#f0f4ff,#fef6ff);border-radius:8px;border-left:3px solid #7c5cfc;">
+            <h4 style="margin:0 0 6px;font-size:13px;color:#7c5cfc;font-weight:600;">🤖 AI Summary</h4>
+            <div style="font-size:13px;color:#323130;line-height:1.6;">${summaryText}</div>
+        </div>` : ''}
+        <div class="pri-action-row">
+            <div class="priority-badge-lg ${effectivePri}">
+                ${priLabel[effectivePri] || effectivePri}
+                ${isOverridden ? '<span class="pri-overridden">Manually overridden</span>' : ''}
+            </div>
+            <div class="pri-edit-wrap">
+                <button class="pri-action-btn" onclick="togglePriMenu(event)" title="Change priority">✏️ Edit</button>
+                <div class="pri-menu" id="priMenu">
+                    <div class="pri-menu-item ${effectivePri === 'act_now' ? 'active' : ''}" onclick="overridePriority('${currentEmail.id}','act_now')">🔴 Act Now</div>
+                    <div class="pri-menu-item ${effectivePri === 'later' ? 'active' : ''}" onclick="overridePriority('${currentEmail.id}','later')">🟡 Later</div>
+                    <div class="pri-menu-item ${effectivePri === 'ignore' ? 'active' : ''}" onclick="overridePriority('${currentEmail.id}','ignore')">🟢 Ignore</div>
+                </div>
+            </div>
+            ${handledEmails[currentEmail.id]
+                ? `<button class="pri-action-btn handled-active" onclick="toggleHandled('${currentEmail.id}')" title="Undo handled">↩️ Undo</button>`
+                : `<button class="pri-action-btn" onclick="toggleHandled('${currentEmail.id}')" title="Mark as handled">✅ Done</button>`}
+        </div>
+    `;
+
+    if (cl.reasons) {
+        html += `<div class="reasons-section">
+            <h4>📊 Classification Reasons</h4>
+            ${cl.reasons.map(r => `<span class="reason-chip">${r}</span>`).join('')}
+        </div>`;
+    }
+    if (cl.key_excerpt) {
+        html += `<div class="key-excerpt">"${cl.key_excerpt}"</div>`;
+    }
+
+    if (ac && !ac.error && ac.action_items && ac.action_items.length > 0) {
+        const hasTodos = ac.action_items.some(a => a.type !== 'calendar_event');
+        const hasCalEvents = ac.action_items.some(a => a.type === 'calendar_event');
+
+        const todoAdded = !!addedTodoEmails[currentEmail.id];
+        const calAdded = !!addedCalEmails[currentEmail.id];
+        const hasNewTodos = hasTodos && !todoAdded;
+        const hasNewCal = hasCalEvents && !calAdded;
+
+        html += `<div class="action-items-section">
+            <h4>📋 Extracted Action Items</h4>
+            ${ac.action_items.map((a, i) => {
+                const isCal = a.type === 'calendar_event';
+                const isAdded = isCal ? calAdded : todoAdded;
+                return `
+                <div class="extracted-action ${isAdded ? 'added' : ''}">
+                    <input type="checkbox" class="checkbox" id="action_${i}" checked ${isAdded ? 'disabled' : ''}>
+                    <div style="flex:1;min-width:0;">
+                        <label for="action_${i}" ${isAdded ? 'style="color:#999;"' : ''}>${a.task}</label>
+                        <span class="action-urgency ${a.urgency}">${a.urgency}</span>
+                        ${isAdded
+                            ? `<span class="action-type-badge ${isCal ? 'cal' : 'todo'}" style="opacity:0.7;cursor:pointer;text-decoration:underline;" onclick="navigateToView('${isCal ? 'calendar' : 'todo'}')">${isCal ? '📅 Added to Calendar →' : '✅ Added to To-Do →'}</span>`
+                            : `<span class="action-type-badge ${isCal ? 'cal' : 'todo'}">${isCal ? '📅 Calendar' : '✅ To-Do'}</span>`}
+                        ${a.due && a.due !== 'unspecified' ? `<div class="action-due">⏰ ${a.due}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('')}
+            ${(hasNewTodos || hasNewCal) ? `<div style="display:flex;gap:8px;margin-top:12px;">
+                ${hasNewTodos ? `<button class="add-to-todo-btn" style="flex:1;" onclick="addActionsToTodo()">✅ Add to To-Do</button>` : ''}
+                ${hasNewCal ? `<button class="add-to-todo-btn" style="flex:1;background:#5c6bc0;" onclick="addActionsToCalendar()">📅 Add to Calendar</button>` : ''}
+            </div>` : ''}
+        </div>`;
+    } else if (ac && !ac.error && ac.action_items && ac.action_items.length === 0) {
+        html += `<div style="text-align:center;padding:12px;color:#605e5c;font-size:13px;background:#fff;border-radius:8px;">✅ No action needed</div>`;
+    } else if (!ac) {
+        html += `<div class="action-items-section">
+            <button class="analyze-btn" onclick="extractActions('${currentEmail.id}')" id="extractBtn_${currentEmail.id}">
+                📋 Extract Action Items
+            </button>
+        </div>`;
+    }
+
+    panel.innerHTML = html;
+}
+
+let pendingOverride = null;
+
+function togglePriMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('priMenu');
+    menu.classList.toggle('open');
+}
+
+document.addEventListener('click', () => {
+    const menu = document.getElementById('priMenu');
+    if (menu) menu.classList.remove('open');
+});
+
+function toggleHandled(emailId) {
+    if (handledEmails[emailId]) {
+        delete handledEmails[emailId];
+        const effectivePri = priorityOverrides[emailId] || (classifications[emailId] && classifications[emailId].priority) || 'all';
+        switchTab(effectivePri);
+    } else {
+        handledEmails[emailId] = true;
+        switchTab('handled');
+    }
+    renderEmailList();
+    renderAgentPanel();
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.email-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+}
+
+function overridePriority(emailId, newPri) {
+    const cl = classifications[emailId];
+    const currentPri = priorityOverrides[emailId] || (cl && cl.priority);
+    if (currentPri === newPri) return;
+
+    pendingOverride = { emailId, newPri };
+
+    const priName = { act_now: 'Act Now', later: 'Later', ignore: 'Ignore' };
+    const fromLabel = priName[currentPri] || 'Unknown';
+    const toLabel = priName[newPri] || newPri;
+
+    document.getElementById('confirmFromPri').textContent = fromLabel;
+    document.getElementById('confirmToPri').textContent = toLabel;
+    document.getElementById('confirmOverrideModal').classList.add('open');
+}
+
+function confirmOverride() {
+    if (pendingOverride) {
+        priorityOverrides[pendingOverride.emailId] = pendingOverride.newPri;
+        pendingOverride = null;
+        document.getElementById('confirmOverrideModal').classList.remove('open');
+        renderEmailList();
+        renderAgentPanel();
+    }
+}
+
+function cancelOverride() {
+    pendingOverride = null;
+    document.getElementById('confirmOverrideModal').classList.remove('open');
+}
+
+async function classifySingle(emailId) {
+    const btn = document.getElementById(`singleBtn_${emailId}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Analyzing...'; }
+
+    try {
+        const res = await fetch(`/api/classify/${emailId}`, { method: 'POST' });
+        const data = await res.json();
+        classifications[emailId] = data;
+        renderEmailList();
+        renderAgentPanel();
+    } catch (e) {
+        classifications[emailId] = { error: e.message };
+        renderAgentPanel();
+    }
+}
+
+async function extractActions(emailId) {
+    const btn = document.getElementById(`extractBtn_${emailId}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Extracting...'; }
+
+    try {
+        const res = await fetch(`/api/extract-actions/${emailId}`, { method: 'POST' });
+        const data = await res.json();
+        actionsCache[emailId] = data;
+        renderAgentPanel();
+    } catch (e) {
+        actionsCache[emailId] = { error: e.message };
+        renderAgentPanel();
+    }
+}
+
+async function autoExtractAndAddTodos(emailId) {
+    if (addedTodoEmails[emailId] || addedCalEmails[emailId]) return;
+    try {
+        const res = await fetch(`/api/extract-actions/${emailId}`, { method: 'POST' });
+        const data = await res.json();
+        actionsCache[emailId] = data;
+
+        if (data && !data.error && data.action_items && data.action_items.length > 0) {
+            const email = emails.find(e => e.id === emailId);
+            const subjectSnippet = email ? email.subject.substring(0, 30) + '...' : 'From email';
+
+            let todoAdded = 0, calAdded = 0;
+            data.action_items.forEach(action => {
+                if (action.type === 'calendar_event') {
+                    const timeStr = parseTimeFromDue(action.due);
+                    events.push({
+                        id: Date.now() + Math.random(),
+                        time: timeStr,
+                        title: action.task,
+                        attendees: email ? email.sender : '',
+                        fromEmail: true,
+                        emailId: emailId,
+                        emailSubject: subjectSnippet,
+                    });
+                    calAdded++;
+                } else {
+                    todos.push({
+                        id: Date.now() + Math.random(),
+                        text: action.task,
+                        emailId: emailId,
+                        emailSubject: subjectSnippet,
+                        priority: action.urgency || 'medium',
+                        due: action.due,
+                        completed: false,
+                    });
+                    todoAdded++;
+                }
+            });
+            if (todoAdded > 0) addedTodoEmails[emailId] = true;
+            if (calAdded > 0) addedCalEmails[emailId] = true;
+
+            updateTodoBadges();
+        }
+    } catch (e) {
+        console.error('auto extract failed for', emailId, e);
+    }
+}
+
+let toastTarget = null;
+
+function showSuccessToast(msg, target) {
+    toastTarget = target;
+    document.getElementById('toastIcon').textContent = target === 'todo' ? '✅' : '📅';
+    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastViewBtn').textContent = target === 'todo' ? 'View To-Do →' : 'View Calendar →';
+    document.getElementById('successToast').classList.add('open');
+    document.getElementById('toastBg').classList.add('open');
+}
+
+function closeToast() {
+    document.getElementById('successToast').classList.remove('open');
+    document.getElementById('toastBg').classList.remove('open');
+}
+
+function toastNavigate() {
+    closeToast();
+    const view = toastTarget === 'todo' ? 'todo' : 'calendar';
+    document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
+    document.querySelector(`.folder-item[data-view="${view}"]`).classList.add('active');
+    switchView(view);
+}
+
+function addActionsToTodo() {
+    if (!currentEmail) return;
+    if (addedTodoEmails[currentEmail.id]) return;
+    const ac = actionsCache[currentEmail.id];
+    if (!ac || !ac.action_items) return;
+
+    const checkboxes = document.querySelectorAll('.extracted-action .checkbox');
+    let added = 0;
+
+    ac.action_items.forEach((action, i) => {
+        if (action.type === 'calendar_event') return;
+        if (checkboxes[i] && checkboxes[i].checked) {
+            todos.push({
+                id: Date.now() + Math.random(),
+                text: action.task,
+                emailId: currentEmail.id,
+                emailSubject: currentEmail.subject.substring(0, 30) + '...',
+                priority: action.urgency || 'medium',
+                due: action.due,
+                completed: false,
+            });
+            added++;
+        }
+    });
+
+    updateTodoBadges();
+    if (added > 0) {
+        addedTodoEmails[currentEmail.id] = true;
+        showSuccessToast(`✅ ${added} item(s) added to To-Do`, 'todo');
+        renderAgentPanel();
+    }
+}
+
+function addActionsToCalendar() {
+    if (!currentEmail) return;
+    if (addedCalEmails[currentEmail.id]) return;
+    const ac = actionsCache[currentEmail.id];
+    if (!ac || !ac.action_items) return;
+
+    const checkboxes = document.querySelectorAll('.extracted-action .checkbox');
+    let added = 0;
+
+    ac.action_items.forEach((action, i) => {
+        if (action.type !== 'calendar_event') return;
+        if (checkboxes[i] && checkboxes[i].checked) {
+            const timeStr = parseTimeFromDue(action.due);
+            events.push({
+                id: Date.now() + Math.random(),
+                time: timeStr,
+                title: action.task,
+                attendees: currentEmail.sender,
+                fromEmail: true,
+                emailId: currentEmail.id,
+                emailSubject: currentEmail.subject.substring(0, 30) + '...',
+            });
+            added++;
+        }
+    });
+
+    if (added > 0) {
+        addedCalEmails[currentEmail.id] = true;
+        showSuccessToast(`📅 ${added} event(s) added to Calendar`, 'calendar');
+        renderAgentPanel();
+    }
+}
+
+function parseTimeFromDue(due) {
+    if (!due || due === 'unspecified') return '09:00';
+    const match = due.match(/(\d{1,2}):(\d{2})/);
+    if (match) return `${match[1].padStart(2,'0')}:${match[2]}`;
+    if (/EOD|end of day|下班前/i.test(due)) return '17:00';
+    if (/morning|上午|AM/i.test(due)) return '10:00';
+    if (/afternoon|下午|PM/i.test(due)) return '14:00';
+    if (/today|今天/i.test(due)) return '15:00';
+    if (/tomorrow|明天/i.test(due)) return '09:00';
+    return '09:00';
+}
+
+function toggleTodo(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) t.completed = !t.completed;
+    updateTodoBadges();
+    renderFullPage();
+}
+
+function addNewTodo(text, input) {
+    if (!text.trim()) return;
+    todos.push({ id: Date.now(), text, emailId: null, emailSubject: null, priority: 'medium', due: 'unspecified', completed: false });
+    input.value = '';
+    updateTodoBadges();
+    renderFullPage();
+}
+
+function goToEmail(id) {
+    switchView('email');
+    currentTab = 'all';
+    document.querySelectorAll('.email-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.email-tab[data-tab="all"]').classList.add('active');
+    selectEmail(id);
+}
+
+function updateTodoBadges() {
+    const active = todos.filter(t => !t.completed).length;
+    document.getElementById('todoBadge').textContent = active;
+}
+
+function switchView(view) {
+    currentView = view;
+    const emailPanels = document.getElementById('emailViewPanels');
+    const fullPage = document.getElementById('fullPageView');
+    if (view === 'email') {
+        emailPanels.style.display = 'flex';
+        fullPage.style.display = 'none';
+    } else {
+        emailPanels.style.display = 'none';
+        fullPage.style.display = 'block';
+        renderFullPage();
+    }
+}
+
+function setTodoFilter(f) {
+    todoFilter = f;
+    renderFullPage();
+}
+
+function renderFullPage() {
+    const container = document.getElementById('fullPageView');
+    if (currentView === 'todo') renderTodoPage(container);
+    else if (currentView === 'calendar') renderCalendarPage(container);
+    else if (currentView === 'contacts') renderContactsPage(container);
+}
+
+function renderTodoPage(container) {
+    const active = todos.filter(t => !t.completed);
+    const completed = todos.filter(t => t.completed);
+    const showing = todoFilter === 'active' ? active : completed;
+
+    const todayItems = showing.filter(t => t.due && t.due !== 'unspecified');
+    const unscheduled = showing.filter(t => !t.due || t.due === 'unspecified');
+
+    function todoItemHTML(t) {
+        const priMark = t.priority === 'high' ? '<span class="priority-mark">!!</span>' : '';
+        return `<div class="todo-item ${t.completed ? 'completed' : ''}">
+            <input type="checkbox" class="todo-checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id})">
+            <div class="todo-content">
+                <div class="todo-text">${priMark}${t.text}</div>
+                <div class="todo-sub">
+                    ${t.due && t.due !== 'unspecified' ? `<span>🕐 ${t.due}</span>` : ''}
+                    ${t.emailId ? `<span class="todo-source" onclick="goToEmail('${t.emailId}')">📧 ${t.emailSubject || 'From email'}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    container.innerHTML = `<div class="todo-page">
+        <div class="todo-top-tabs">
+            <div class="todo-top-tab ${todoFilter === 'active' ? 'active' : ''}" onclick="setTodoFilter('active')">
+                In Progress ${active.length > 0 ? `<span class="tab-count">${active.length}</span>` : ''}
+            </div>
+            <div class="todo-top-tab ${todoFilter === 'completed' ? 'active' : ''}" onclick="setTodoFilter('completed')">
+                Completed ${completed.length > 0 ? `<span class="tab-count">${completed.length}</span>` : ''}
+            </div>
+        </div>
+
+        ${showing.length === 0 ? `
+            <div style="text-align:center;padding:80px 0;color:#a0a0a0;">
+                <div style="font-size:48px;margin-bottom:16px;">${todoFilter === 'active' ? '🎉' : '📝'}</div>
+                <div style="font-size:16px;">${todoFilter === 'active' ? 'No to-do items' : 'No completed items'}</div>
+                <div style="font-size:13px;margin-top:8px;">Extract action items from Email Agent analysis to add to your to-do list</div>
+            </div>
+        ` : `
+            ${todayItems.length > 0 ? `
+                <div class="todo-section-title">Today</div>
+                ${todayItems.map(todoItemHTML).join('')}
+            ` : ''}
+            ${unscheduled.length > 0 ? `
+                <div class="todo-section-title">Unscheduled</div>
+                ${unscheduled.map(todoItemHTML).join('')}
+            ` : ''}
+        `}
+
+        ${todoFilter === 'active' ? `<div class="todo-add-row">
+            <input type="text" placeholder="+ Add new to-do, press Enter to confirm..."
+                   onkeypress="if(event.key==='Enter') addNewTodo(this.value, this)">
+        </div>` : ''}
+    </div>`;
+}
+
+function renderCalendarPage(container) {
+    const today = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dateStr = `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`;
+
+    const hours = [];
+    for (let h = 8; h <= 18; h++) {
+        const label = `${h.toString().padStart(2,'0')}:00`;
+        const evts = events.filter(e => {
+            const start = parseInt(e.time.split(':')[0]);
+            return start === h;
+        });
+        hours.push({ label, events: evts });
+    }
+
+    container.innerHTML = `<div class="cal-page">
+        <div class="cal-date-header">📅 ${dateStr}</div>
+        <div class="cal-timeline">
+            ${hours.map(hr => `
+                <div class="cal-hour-row">
+                    <div class="cal-hour-label">${hr.label}</div>
+                    <div class="cal-hour-content">
+                        ${hr.events.map(e => `
+                            <div class="cal-event ${e.fromEmail ? 'from-email' : ''}">
+                                <div class="cal-event-title">${e.title}</div>
+                                <div class="cal-event-meta">${e.time} · ${e.attendees}</div>
+                                ${e.fromEmail ? `<div class="cal-event-source" onclick="goToEmail('${e.emailId}')">📧 ${e.emailSubject || 'From email'}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    </div>`;
+}
+
+async function renderContactsPage(container) {
+    if (contacts.length === 0) {
+        try {
+            const res = await fetch('/api/contacts');
+            const data = await res.json();
+            contacts = data.contacts;
+        } catch (e) {
+            container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div>Failed to load contacts</div></div>`;
+            return;
+        }
+    }
+
+    const avatarColors = ['#0078d4','#6c5ce7','#00b894','#e67e00','#d13438','#e84393','#00cec9','#636e72'];
+    function getColor(name) { return avatarColors[name.charCodeAt(0) % avatarColors.length]; }
+    function getInitials(name) {
+        const clean = name.replace(/\s*\(.*?\)\s*/g, '').trim();
+        return clean.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    const q = contactsSearch.toLowerCase();
+    const filtered = q ? contacts.filter(c =>
+        c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
+    ) : contacts;
+
+    container.innerHTML = `<div class="contacts-page">
+        <div class="contacts-header">
+            <h2>👥 Contacts (${filtered.length})</h2>
+            <input class="contacts-search" placeholder="Search contacts..." value="${contactsSearch}"
+                   oninput="contactsSearch=this.value;renderFullPage();">
+        </div>
+        ${filtered.length === 0 ? `
+            <div style="text-align:center;padding:60px 0;color:#a0a0a0;">
+                <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+                <div style="font-size:16px;">No contacts found</div>
+            </div>
+        ` : filtered.map(c => {
+            const isVip = aiSettings.whitelist.some(w => c.email.toLowerCase().includes(w.toLowerCase()) || c.name.toLowerCase().includes(w.toLowerCase()));
+            const isMuted = aiSettings.blacklist.some(b => c.email.toLowerCase().includes(b.toLowerCase()) || c.name.toLowerCase().includes(b.toLowerCase()));
+            return `<div class="contact-card">
+                <div class="contact-avatar" style="background:${getColor(c.name)}">${getInitials(c.name)}</div>
+                <div class="contact-info">
+                    <div class="contact-name">
+                        ${c.name.replace(/\s*\(.*?\)\s*/g, '')}
+                        ${isVip ? '<span class="contact-vip-badge">⭐ VIP</span>' : ''}
+                        ${isMuted ? '<span class="contact-muted-badge">🔇 Muted</span>' : ''}
+                    </div>
+                    <div class="contact-email">${c.email}</div>
+                    <div class="contact-meta">${c.email_count} email(s) · Last: ${c.last_subject}</div>
+                </div>
+                <div class="contact-actions">
+                    <button class="contact-action-btn ${isVip ? 'vip-active' : ''}"
+                            onclick="toggleContactList('whitelist','${c.email}','${c.name.replace(/'/g,"\\'")}')">
+                        ${isVip ? '⭐ VIP' : '☆ Set VIP'}
+                    </button>
+                    <button class="contact-action-btn ${isMuted ? 'muted-active' : ''}"
+                            onclick="toggleContactList('blacklist','${c.email}','${c.name.replace(/'/g,"\\'")}')">
+                        ${isMuted ? '🔇 Muted' : '🔇 Mute'}
+                    </button>
+                </div>
+            </div>`;
+        }).join('')}
+    </div>`;
+}
+
+function toggleContactList(listName, email, name) {
+    const otherList = listName === 'whitelist' ? 'blacklist' : 'whitelist';
+    const identifier = email;
+
+    const idx = aiSettings[listName].findIndex(t => t.toLowerCase() === identifier.toLowerCase());
+    if (idx >= 0) {
+        aiSettings[listName].splice(idx, 1);
+    } else {
+        aiSettings[otherList] = aiSettings[otherList].filter(t => t.toLowerCase() !== identifier.toLowerCase());
+        aiSettings[listName].push(identifier);
+    }
+
+    renderFullPage();
+    renderEmailList();
+}
+
+// ─── Test Email Modal ───
+let testMode = 'single';
+
+function switchTestTab(mode) {
+    testMode = mode;
+    document.querySelectorAll('.test-tab').forEach(t => t.classList.toggle('active', t.dataset.testtab === mode));
+    document.getElementById('testSinglePane').style.display = mode === 'single' ? '' : 'none';
+    document.getElementById('testBatchPane').style.display = mode === 'batch' ? '' : 'none';
+    document.getElementById('batchPreviewBtn').style.display = mode === 'batch' ? '' : 'none';
+    document.getElementById('batchPreview').style.display = 'none';
+    document.getElementById('testSubmitBtn').textContent = mode === 'single' ? 'Send & Analyze' : 'Send All & Analyze';
+}
+
+function openTestModal() {
+    if (currentView !== 'email') switchView('email');
+    document.getElementById('testEmailModal').classList.add('open');
+    switchTestTab('single');
+    document.getElementById('testFromName').focus();
+}
+
+function closeTestModal() {
+    document.getElementById('testEmailModal').classList.remove('open');
+    document.getElementById('testFromName').value = '';
+    document.getElementById('testFromEmail').value = '';
+    document.getElementById('testSubject').value = '';
+    document.getElementById('testBody').value = '';
+    document.getElementById('testBatchInput').value = '';
+    document.getElementById('batchPreview').style.display = 'none';
+}
+
+function parseBatchMarkdown(md) {
+    const sections = md.split(/^---$/m).map(s => s.trim()).filter(Boolean);
+    const results = [];
+    for (const section of sections) {
+        const lines = section.split('\n');
+        let fromName = '', fromEmail = '', subject = '', to = [], cc = [], bodyLines = [];
+        let inBody = false;
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('##')) continue;
+            if (!inBody) {
+                const fromMatch = trimmed.match(/^-\s*From:\s*(.+)$/i);
+                const subMatch = trimmed.match(/^-\s*Subject:\s*(.+)$/i);
+                const toMatch = trimmed.match(/^-\s*To:\s*(.+)$/i);
+                const ccMatch = trimmed.match(/^-\s*CC:\s*(.+)$/i);
+                if (fromMatch) {
+                    const raw = fromMatch[1].trim();
+                    const angleMatch = raw.match(/^(.+?)\s*<(.+?)>$/);
+                    if (angleMatch) { fromName = angleMatch[1].trim(); fromEmail = angleMatch[2].trim(); }
+                    else { fromName = raw; fromEmail = ''; }
+                    continue;
+                }
+                if (subMatch) { subject = subMatch[1].trim(); continue; }
+                if (toMatch) { to = toMatch[1].split(',').map(s => s.trim()); continue; }
+                if (ccMatch) { cc = ccMatch[1].split(',').map(s => s.trim()); continue; }
+                if (trimmed === '' && (fromName || subject)) { inBody = true; continue; }
+                if (trimmed === '') continue;
+            }
+            if (inBody) bodyLines.push(line);
+        }
+        if (fromName && subject) {
+            results.push({ fromName, fromEmail: fromEmail || 'test@example.com', subject, body: bodyLines.join('\n').trim() || '(no body)', to, cc });
+        }
+    }
+    return results;
+}
+
+function previewBatchEmails() {
+    const md = document.getElementById('testBatchInput').value.trim();
+    const preview = document.getElementById('batchPreview');
+    if (!md) { preview.style.display = 'none'; return; }
+    const parsed = parseBatchMarkdown(md);
+    if (parsed.length === 0) {
+        preview.innerHTML = '<div style="color:#d13438;font-size:12px;">No emails detected. Check the format.</div>';
+        preview.style.display = 'block';
+        return;
+    }
+    preview.innerHTML = `<div style="font-size:12px;font-weight:600;color:#323130;margin-bottom:6px;">${parsed.length} email(s) detected:</div>` +
+        parsed.map((e, i) => `<div class="batch-email-card">
+            <div class="batch-from">${i + 1}. ${e.fromName} &lt;${e.fromEmail}&gt;</div>
+            <div class="batch-subj">📧 ${e.subject}</div>
+            <div class="batch-body-preview">${e.body.substring(0, 80)}${e.body.length > 80 ? '...' : ''}</div>
+        </div>`).join('');
+    preview.style.display = 'block';
+}
+
+async function submitTestEmail() {
+    if (testMode === 'batch') return submitBatchEmails();
+
+    const fromName = document.getElementById('testFromName').value.trim();
+    const fromEmail = document.getElementById('testFromEmail').value.trim();
+    const subject = document.getElementById('testSubject').value.trim();
+    const body = document.getElementById('testBody').value.trim();
+
+    if (!fromName || !subject || !body) {
+        alert('Please fill in sender name, subject, and body');
+        return;
+    }
+
+    const btn = document.getElementById('testSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '🤖 AI Analyzing...';
+
+    try {
+        const res = await fetch('/api/add-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                from_name: fromName,
+                from_email: fromEmail || 'test@example.com',
+                subject: subject,
+                body: body,
+            }),
+        });
+        const data = await res.json();
+
+        const newEmail = data.email;
+        emails.unshift(newEmail);
+        classifications[newEmail.id] = data.classification;
+
+        if (aiSettings.autoExtract && data.classification && data.classification.priority === 'act_now') {
+            btn.textContent = '📋 Extracting actions...';
+            await autoExtractAndAddTodos(newEmail.id);
+        }
+
+        closeTestModal();
+        btn.disabled = false;
+        btn.textContent = 'Send & Analyze';
+
+        selectEmail(newEmail.id);
+        renderEmailList();
+    } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Send & Analyze';
+        alert('Failed to send: ' + e.message);
+    }
+}
+
+async function submitBatchEmails() {
+    const md = document.getElementById('testBatchInput').value.trim();
+    const parsed = parseBatchMarkdown(md);
+    if (parsed.length === 0) { alert('No emails detected. Check the markdown format.'); return; }
+
+    const btn = document.getElementById('testSubmitBtn');
+    btn.disabled = true;
+    const total = parsed.length;
+    let lastEmail = null;
+
+    for (let i = 0; i < total; i++) {
+        btn.textContent = `🤖 Analyzing ${i + 1}/${total}...`;
+        const e = parsed[i];
+        try {
+            const res = await fetch('/api/add-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from_name: e.fromName,
+                    from_email: e.fromEmail,
+                    subject: e.subject,
+                    body: e.body,
+                    to_list: e.to.length ? e.to : undefined,
+                    cc_list: e.cc.length ? e.cc : undefined,
+                }),
+            });
+            const data = await res.json();
+            const newEmail = data.email;
+            emails.unshift(newEmail);
+            classifications[newEmail.id] = data.classification;
+            lastEmail = newEmail;
+
+            if (aiSettings.autoExtract && data.classification && data.classification.priority === 'act_now') {
+                await autoExtractAndAddTodos(newEmail.id);
+            }
+        } catch (err) {
+            console.error(`Failed to add email ${i + 1}:`, err);
+        }
+    }
+
+    closeTestModal();
+    btn.disabled = false;
+    btn.textContent = 'Send All & Analyze';
+    renderEmailList();
+    if (lastEmail) selectEmail(lastEmail.id);
+    showSuccessToast(`📩 ${total} email(s) added and analyzed`, 'todo');
+}
+
+// ─── Event Listeners ───
+document.querySelectorAll('.email-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        currentTab = tab.dataset.tab;
+        document.querySelectorAll('.email-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderEmailList();
+    });
+});
+
+document.querySelectorAll('.folder-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const view = item.dataset.view;
+        if (view) {
+            document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            switchView(view);
+        }
+    });
+});
+
+// ─── Resizable Email List ───
+(function() {
+    const handle = document.getElementById('resizeHandle');
+    const container = document.querySelector('.email-list-container');
+    let startX, startW;
+
+    handle.addEventListener('mousedown', e => {
+        e.preventDefault();
+        startX = e.clientX;
+        startW = container.offsetWidth;
+        handle.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        function onMove(e) {
+            const w = startW + (e.clientX - startX);
+            container.style.width = Math.max(280, Math.min(600, w)) + 'px';
+        }
+        function onUp() {
+            handle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+})();
+
+init();
+setInterval(checkDailyReEval, 60 * 60 * 1000);
+</script>
+</body>
+</html>
