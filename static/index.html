@@ -1725,13 +1725,9 @@ async function autoExtractAndAddTodos(emailId) {
     }
 }
 
-let toastTarget = null;
-
 function showSuccessToast(msg, target) {
-    toastTarget = target;
     document.getElementById('toastIcon').textContent = target === 'todo' ? '✅' : '📅';
     document.getElementById('toastMsg').textContent = msg;
-    document.getElementById('toastViewBtn').textContent = target === 'todo' ? 'View To-Do →' : 'View Calendar →';
     document.getElementById('successToast').classList.add('open');
     document.getElementById('toastBg').classList.add('open');
 }
@@ -1741,13 +1737,6 @@ function closeToast() {
     document.getElementById('toastBg').classList.remove('open');
 }
 
-function toastNavigate() {
-    closeToast();
-    const view = toastTarget === 'todo' ? 'todo' : 'calendar';
-    document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
-    document.querySelector(`.folder-item[data-view="${view}"]`).classList.add('active');
-    switchView(view);
-}
 
 function addActionsToTodo() {
     if (!currentEmail) return;
