@@ -1571,7 +1571,7 @@ function renderAgentPanel() {
                 ${hasNewCal ? `<button class="add-to-todo-btn" style="flex:1;background:#5c6bc0;" onclick="addActionsToCalendar()">📅 Add to Calendar</button>` : ''}
             </div>` : ''}
         </div>`;
-    } else if (ac && !ac.error && ac.action_items && ac.action_items.length === 0) {
+    } else if ((ac && !ac.error && ac.action_items && ac.action_items.length === 0) || (ac && ac.error)) {
         html += `<div style="text-align:center;padding:12px;color:#605e5c;font-size:13px;background:#fff;border-radius:8px;">✅ No action needed</div>`;
     } else if (!ac) {
         html += `<div class="action-items-section">
