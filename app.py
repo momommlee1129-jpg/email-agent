@@ -175,7 +175,7 @@ def render_icon_nav(col):
 
 def render_folders(col):
     with col:
-        st.markdown('<div class="folder-hdr">alex.chen@techcorp.com</div>', unsafe_allow_html=True)
+        st.markdown('<div class="folder-hdr">momo@techcorp.com</div>', unsafe_allow_html=True)
 
         classified = bool(st.session_state.classifications)
         act_n = sum(1 for e in MOCK_EMAILS if _eff_pri(e["id"]) == "act_now") if classified else 0

@@ -4,9 +4,9 @@ Covers diverse scenarios for testing Priority Triage, Action Item Extraction, an
 """
 
 USER_CONTEXT = {
-    "user_name": "Alex Chen",
+    "user_name": "Momo",
     "user_role": "Engineering Manager, Platform Team",
-    "user_email": "alex.chen@techcorp.com",
+    "user_email": "momo@techcorp.com",
     "vip_contacts": [
         "sarah.wong@techcorp.com",   # Direct manager (VP of Engineering)
         "mike.liu@techcorp.com",     # Skip-level (CTO)
@@ -28,11 +28,11 @@ MOCK_EMAILS = [
         "id": "email_001",
         "from": "sarah.wong@techcorp.com",
         "from_name": "Sarah Wong (VP of Engineering)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Need your Q2 headcount numbers by EOD",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "I'm pulling together the Q2 headcount plan for the exec review tomorrow morning. "
             "Can you send me your team's headcount request with justifications by end of day today?\n\n"
             "Please include:\n"
@@ -51,7 +51,7 @@ MOCK_EMAILS = [
         "id": "email_002",
         "from": "notifications@github.com",
         "from_name": "GitHub Notifications",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "[platform-core] CI Build #4521 passed",
         "body": (
@@ -71,11 +71,11 @@ MOCK_EMAILS = [
         "id": "email_003",
         "from": "lisa.zhang@techcorp.com",
         "from_name": "Lisa Zhang (Senior Engineer, Direct Report)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": ["ryan.ma@techcorp.com"],
         "subject": "Re: Database migration — rollback concern",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "I've been reviewing the migration plan and I'm worried about the rollback strategy. "
             "If the migration fails midway, we could lose 2-3 hours of data because the current "
             "backup window doesn't cover the migration period.\n\n"
@@ -119,7 +119,7 @@ MOCK_EMAILS = [
         "id": "email_005",
         "from": "david.kim@techcorp.com",
         "from_name": "David Kim (PM, Cross-team Peer)",
-        "to": ["alex.chen@techcorp.com", "emma.lee@techcorp.com", "kevin.wu@techcorp.com", "nina.patel@techcorp.com"],
+        "to": ["momo@techcorp.com", "emma.lee@techcorp.com", "kevin.wu@techcorp.com", "nina.patel@techcorp.com"],
         "cc": ["product-updates@techcorp.com"],
         "subject": "Q2 Launch Status Update — Week 12",
         "body": (
@@ -129,10 +129,10 @@ MOCK_EMAILS = [
             "- Payment integration (Kevin's team) — 90% complete\n"
             "- API documentation (Nina's team) — shipped\n\n"
             "**At Risk:**\n"
-            "- Platform migration (Alex's team) — dependency on database migration Go/No-Go\n"
+            "- Platform migration (Momo's team) — dependency on database migration Go/No-Go\n"
             "- Mobile app update — blocked on design review\n\n"
             "**Action Items:**\n"
-            "- Alex: Confirm database migration timeline after today's Go/No-Go meeting\n"
+            "- Momo: Confirm database migration timeline after today's Go/No-Go meeting\n"
             "- Kevin: Share payment API test results by Wednesday\n"
             "- Nina: Update API changelog for v2.3 changes\n\n"
             "We'll discuss all of this in the Q2 Planning Review at 2pm today.\n\n"
@@ -148,11 +148,11 @@ MOCK_EMAILS = [
         "id": "email_006",
         "from": "recruiter@talentfirm.com",
         "from_name": "Jessica Taylor (External Recruiter)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "URGENT: Exclusive Director-level opportunity — respond by TODAY",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "I came across your profile and I'm incredibly impressed. I have an URGENT Director of Engineering "
             "opportunity at a Series C startup that's perfect for you.\n\n"
             "This role won't last — they're making a decision THIS WEEK. "
@@ -170,11 +170,11 @@ MOCK_EMAILS = [
         "id": "email_007",
         "from": "james.park@techcorp.com",
         "from_name": "James Park (Junior Engineer, Direct Report)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Quick question before our 1:1",
         "body": (
-            "Hey Alex,\n\n"
+            "Hey Momo,\n\n"
             "Before our 1:1 at 10am, wanted to give you a heads up — I've been thinking about "
             "my career growth and I'd like to discuss moving to the ML team. I know this might be "
             "sensitive timing with the migration project, so I wanted you to have time to think about it.\n\n"
@@ -192,7 +192,7 @@ MOCK_EMAILS = [
         "id": "email_008",
         "from": "security-alerts@techcorp.com",
         "from_name": "Security Team (Automated)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "[INFO] Weekly Security Scan Report — No Issues Found",
         "body": (
@@ -214,11 +214,11 @@ MOCK_EMAILS = [
         "id": "email_009",
         "from": "emma.lee@techcorp.com",
         "from_name": "Emma Lee (Engineering Manager, Peer)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Coffee chat this week?",
         "body": (
-            "Hey Alex,\n\n"
+            "Hey Momo,\n\n"
             "It's been a while since we caught up! Would love to grab coffee this week "
             "and hear how the platform migration is going. I'm also dealing with some similar "
             "challenges on the mobile side.\n\n"
@@ -236,13 +236,13 @@ MOCK_EMAILS = [
         "from": "mike.liu@techcorp.com",
         "from_name": "Mike Liu (CTO)",
         "to": ["sarah.wong@techcorp.com"],
-        "cc": ["alex.chen@techcorp.com", "david.kim@techcorp.com"],
+        "cc": ["momo@techcorp.com", "david.kim@techcorp.com"],
         "subject": "Re: Q2 strategy alignment",
         "body": (
             "Sarah,\n\n"
             "Thanks for the update. I'm generally aligned with the plan but have one concern — "
             "the platform migration timeline feels aggressive given the current team size. "
-            "Alex, can you put together a risk assessment with mitigation options? "
+            "Momo, can you put together a risk assessment with mitigation options? "
             "I'd like to see it before the board meeting next Tuesday.\n\n"
             "Also, let's make sure we have a rollback plan that the board will be comfortable with.\n\n"
             "Mike"
@@ -257,11 +257,11 @@ MOCK_EMAILS = [
         "id": "email_011",
         "from": "lisa.zhang@techcorp.com",
         "from_name": "Lisa Zhang (Senior Engineer, Direct Report)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": ["ryan.ma@techcorp.com"],
         "subject": "FYI: Rollback plan v3 is ready for review",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "Just a heads up — I've uploaded the final rollback plan (v3) to Confluence. "
             "Ryan already reviewed the scripts section and signed off.\n\n"
             "No rush, but would be good if you could skim through it before the Go/No-Go meeting. "
@@ -279,11 +279,11 @@ MOCK_EMAILS = [
         "id": "email_012",
         "from": "kevin.wu@techcorp.com",
         "from_name": "Kevin Wu (Engineering Manager, Payments Team)",
-        "to": ["alex.chen@techcorp.com", "david.kim@techcorp.com"],
+        "to": ["momo@techcorp.com", "david.kim@techcorp.com"],
         "cc": ["nina.patel@techcorp.com", "emma.lee@techcorp.com"],
         "subject": "Re: API versioning strategy — we need to align",
         "body": (
-            "Alex, David,\n\n"
+            "Momo, David,\n\n"
             "After a week of back and forth I think we're converging. Here's my understanding:\n\n"
             "✅ Agreed:\n"
             "- v2 endpoints use the new schema\n"
@@ -291,13 +291,13 @@ MOCK_EMAILS = [
             "- Mobile gets early access to v2 /payments and /auth\n\n"
             "❓ Still open:\n"
             "- Who owns the v1→v2 migration guide for external partners? Nina says her team is at capacity.\n"
-            "- Rate limiting on v2 — Alex, your platform team controls this. Can we do 1000 req/s per partner initially?\n\n"
+            "- Rate limiting on v2 — Momo, your platform team controls this. Can we do 1000 req/s per partner initially?\n\n"
             "I need answers on both by Wednesday so I can update the partner communication plan.\n\n"
             "Kevin\n\n"
             "---- Replied Message ----\n"
             "From    David Kim <david.kim@techcorp.com>\n"
             "Date    03/23/2025 11:30\n"
-            "To      <kevin.wu@techcorp.com>, <alex.chen@techcorp.com>\n"
+            "To      <kevin.wu@techcorp.com>, <momo@techcorp.com>\n"
             "Cc      <nina.patel@techcorp.com>, <emma.lee@techcorp.com>\n"
             "Subject Re: API versioning strategy — we need to align\n\n"
             "I'm fine with 6 months deprecation. But the migration guide is critical — we can't "
@@ -307,13 +307,13 @@ MOCK_EMAILS = [
             "---- Replied Message ----\n"
             "From    Nina Patel <nina.patel@techcorp.com>\n"
             "Date    03/22/2025 15:00\n"
-            "To      <kevin.wu@techcorp.com>, <alex.chen@techcorp.com>, <david.kim@techcorp.com>\n"
+            "To      <kevin.wu@techcorp.com>, <momo@techcorp.com>, <david.kim@techcorp.com>\n"
             "Subject Re: API versioning strategy — we need to align\n\n"
             "My team just shipped the v2.3 changelog and we're now heads-down on the developer portal "
             "redesign. I genuinely don't have bandwidth for a migration guide right now. Can we push it to April?\n\n"
             "Nina\n\n"
             "---- Replied Message ----\n"
-            "From    Alex Chen <alex.chen@techcorp.com>\n"
+            "From    Momo <momo@techcorp.com>\n"
             "Date    03/22/2025 10:15\n"
             "To      <kevin.wu@techcorp.com>, <david.kim@techcorp.com>\n"
             "Cc      <nina.patel@techcorp.com>, <emma.lee@techcorp.com>\n"
@@ -322,11 +322,11 @@ MOCK_EMAILS = [
             "given how many external partners rely on v1.\n\n"
             "For rate limiting, let me check what the current infrastructure can handle. "
             "I'll have numbers by next week.\n\n"
-            "Alex\n\n"
+            "Momo\n\n"
             "---- Replied Message ----\n"
             "From    Kevin Wu <kevin.wu@techcorp.com>\n"
             "Date    03/21/2025 09:00\n"
-            "To      <alex.chen@techcorp.com>, <david.kim@techcorp.com>\n"
+            "To      <momo@techcorp.com>, <david.kim@techcorp.com>\n"
             "Cc      <nina.patel@techcorp.com>, <emma.lee@techcorp.com>\n"
             "Subject API versioning strategy — we need to align\n\n"
             "Hey all, we need to get on the same page about the API versioning strategy.\n"
@@ -375,11 +375,11 @@ MOCK_EMAILS = [
         "id": "email_014",
         "from": "ryan.ma@techcorp.com",
         "from_name": "Ryan Ma (Staff Engineer)",
-        "to": ["alex.chen@techcorp.com", "lisa.zhang@techcorp.com"],
+        "to": ["momo@techcorp.com", "lisa.zhang@techcorp.com"],
         "cc": [],
         "subject": "Re: Staging environment issues — resolved (mostly)",
         "body": (
-            "Alex, Lisa,\n\n"
+            "Momo, Lisa,\n\n"
             "Good news: the staging DB replication lag is fixed. Root cause was a misconfigured "
             "connection pool — I've documented it in the incident log.\n\n"
             "However, I noticed something else while debugging: our staging environment is running "
@@ -390,16 +390,16 @@ MOCK_EMAILS = [
             "~20 minutes.\n\n"
             "Ryan\n\n"
             "---- Replied Message ----\n"
-            "From    Alex Chen <alex.chen@techcorp.com>\n"
+            "From    Momo <momo@techcorp.com>\n"
             "Date    03/23/2025 15:30\n"
             "To      <ryan.ma@techcorp.com>, <lisa.zhang@techcorp.com>\n"
             "Subject Re: Staging environment issues\n\n"
             "Ryan, any update on the staging issues? We need staging stable for the migration rehearsal.\n\n"
-            "Alex\n\n"
+            "Momo\n\n"
             "---- Replied Message ----\n"
             "From    Lisa Zhang <lisa.zhang@techcorp.com>\n"
             "Date    03/23/2025 10:15\n"
-            "To      <alex.chen@techcorp.com>, <ryan.ma@techcorp.com>\n"
+            "To      <momo@techcorp.com>, <ryan.ma@techcorp.com>\n"
             "Subject Re: Staging environment issues\n\n"
             "I'm seeing intermittent failures in my migration test runs. Staging DB seems to have "
             "replication lag — some queries return stale data. Ryan, can you look into this?\n\n"
@@ -407,7 +407,7 @@ MOCK_EMAILS = [
             "---- Replied Message ----\n"
             "From    Ryan Ma <ryan.ma@techcorp.com>\n"
             "Date    03/22/2025 17:00\n"
-            "To      <alex.chen@techcorp.com>, <lisa.zhang@techcorp.com>\n"
+            "To      <momo@techcorp.com>, <lisa.zhang@techcorp.com>\n"
             "Subject Staging environment issues\n\n"
             "Heads up: I'm seeing some weird behavior in staging. Writes to the primary are taking "
             "2-3 seconds to replicate. Going to investigate tomorrow.\n\n"
@@ -424,11 +424,11 @@ MOCK_EMAILS = [
         "id": "email_015",
         "from": "marketing@cloudplatform.io",
         "from_name": "CloudPlatform Marketing",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "🚀 Limited Time: 50% off Enterprise Plan — Ends Friday!",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "You're missing out! For a limited time, get 50% off our Enterprise Plan.\n\n"
             "✅ Unlimited API calls\n"
             "✅ 99.99% uptime SLA\n"
@@ -451,17 +451,17 @@ MOCK_EMAILS = [
         "id": "email_016",
         "from": "noreply@jira.techcorp.com",
         "from_name": "Jira (Automated)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "[PLAT-1234] Bug: API timeout on /v2/payments endpoint — Assigned to you",
         "body": (
-            "Alex Chen, a Jira issue has been assigned to you.\n\n"
+            "Momo, a Jira issue has been assigned to you.\n\n"
             "Project: Platform Core (PLAT)\n"
             "Issue: PLAT-1234\n"
             "Type: Bug\n"
             "Priority: Critical\n"
             "Reporter: Kevin Wu\n"
-            "Assignee: Alex Chen\n\n"
+            "Assignee: Momo\n\n"
             "Description:\n"
             "The /v2/payments endpoint is intermittently timing out under load. "
             "Response times spike to 30s+ when concurrent requests exceed 200. "
@@ -483,7 +483,7 @@ MOCK_EMAILS = [
         "id": "email_017",
         "from": "newsletter@techweekly.com",
         "from_name": "Tech Weekly Newsletter",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "This Week in Tech: OpenAI's New Model, Kubernetes 1.30, and the Rise of Rust",
         "body": (
@@ -511,11 +511,11 @@ MOCK_EMAILS = [
         "id": "email_018",
         "from": "noreply@slack.com",
         "from_name": "Slack Notification",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "You have 12 unread messages in #platform-incidents",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "You have unread messages in channels you follow:\n\n"
             "#platform-incidents (12 new)\n"
             "  - ryan.ma: \"Staging DB replication lag resolved ✅\"\n"
@@ -539,7 +539,7 @@ MOCK_EMAILS = [
         "id": "email_019",
         "from": "noreply@pagerduty.com",
         "from_name": "PagerDuty Alert",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "🔴 [TRIGGERED] High Error Rate on platform-api-prod (>5% 5xx)",
         "body": (
@@ -554,7 +554,7 @@ MOCK_EMAILS = [
             "Current rate: 8.3%\n"
             "Affected endpoints: /v2/payments, /v2/auth\n"
             "Duration: 12 minutes and counting\n\n"
-            "On-call: Ryan Ma (primary), Alex Chen (secondary)\n\n"
+            "On-call: Ryan Ma (primary), Momo (secondary)\n\n"
             "Acknowledge: https://pagerduty.com/incidents/P12345/ack\n"
             "Resolve: https://pagerduty.com/incidents/P12345/resolve\n"
             "View Dashboard: https://grafana.techcorp.com/d/api-errors"
@@ -569,11 +569,11 @@ MOCK_EMAILS = [
         "id": "email_020",
         "from": "events@oreilly.com",
         "from_name": "O'Reilly Media",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Invitation: O'Reilly Software Architecture Conference 2025 — Early Bird Pricing",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "You're invited to the O'Reilly Software Architecture Conference 2025!\n\n"
             "📅 June 15-17, 2025 | San Jose Convention Center\n\n"
             "Featured sessions:\n"
@@ -596,7 +596,7 @@ MOCK_EMAILS = [
         "id": "email_021",
         "from": "noreply@github.com",
         "from_name": "GitHub Notifications",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "[platform-core] PR #2847: Config refactor — Review requested",
         "body": (
@@ -608,7 +608,7 @@ MOCK_EMAILS = [
             "- Removed deprecated config_legacy.py\n"
             "- Added unit tests for config parsing\n\n"
             "+342 −189 across 12 files\n\n"
-            "Reviewers: @alex.chen (requested)\n"
+            "Reviewers: @momo (requested)\n"
             "Labels: refactor, config, ready-for-review\n\n"
             "View PR: https://github.com/techcorp/platform-core/pull/2847"
         ),
@@ -622,11 +622,11 @@ MOCK_EMAILS = [
         "id": "email_022",
         "from": "no-reply@linkedin.com",
         "from_name": "LinkedIn",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
-        "subject": "Alex, you have 8 new connection requests and 3 messages",
+        "subject": "Momo, you have 8 new connection requests and 3 messages",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "Here's what's happening on LinkedIn:\n\n"
             "🔗 8 new connection requests\n"
             "  - Jessica Taylor (Senior Recruiter at TalentFirm)\n"
@@ -677,7 +677,7 @@ MOCK_EMAILS = [
         "id": "email_024",
         "from": "aws-notifications@amazon.com",
         "from_name": "AWS Billing",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": ["finance@techcorp.com"],
         "subject": "AWS Cost Alert: Your March spending is 20% over budget",
         "body": (
@@ -709,7 +709,7 @@ MOCK_EMAILS = [
         "id": "email_025",
         "from": "confluence-noreply@techcorp.com",
         "from_name": "Confluence (Automated)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Weekly digest: 5 pages updated in Platform Team space",
         "body": (
@@ -718,7 +718,7 @@ MOCK_EMAILS = [
             "1. Database Migration Rollback Plan v3 — Lisa Zhang (3 edits)\n"
             "2. Q2 OKRs — David Kim (1 edit)\n"
             "3. On-call Runbook — Ryan Ma (2 edits)\n"
-            "4. Team Norms & Working Agreements — Alex Chen (1 edit)\n"
+            "4. Team Norms & Working Agreements — Momo (1 edit)\n"
             "5. Platform Architecture Overview — Lisa Zhang (1 edit)\n\n"
             "View all updates: https://confluence.techcorp.com/spaces/PLAT\n\n"
             "Manage notifications: https://confluence.techcorp.com/settings/notifications"
@@ -733,11 +733,11 @@ MOCK_EMAILS = [
         "id": "email_026",
         "from": "promotions@saas-tools.com",
         "from_name": "SaaS Tools Weekly",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "The 10 Best DevOps Tools of 2025 — Free Report Inside",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "We've just released our annual report on the top DevOps tools!\n\n"
             "Download your FREE copy:\n"
             "📥 https://saas-tools.com/devops-2025-report\n\n"
@@ -818,11 +818,11 @@ MOCK_EMAILS = [
         "id": "email_029",
         "from": "noreply@zoom.us",
         "from_name": "Zoom",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Cloud Recording Available: Q2 Planning Review (03/23)",
         "body": (
-            "Hi Alex Chen,\n\n"
+            "Hi Momo,\n\n"
             "Your cloud recording is now available.\n\n"
             "Meeting: Q2 Planning Review\n"
             "Date: March 23, 2025 2:00 PM PDT\n"
@@ -844,11 +844,11 @@ MOCK_EMAILS = [
         "id": "email_030",
         "from": "vendor@dbconsulting.com",
         "from_name": "Tom Harris (DB Consulting Inc.)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": ["procurement@techcorp.com"],
         "subject": "Re: Database Migration Support — Proposal Attached",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "Thanks for the call last week. As discussed, please find attached our proposal for "
             "database migration consulting support.\n\n"
             "Summary:\n"
@@ -867,7 +867,7 @@ MOCK_EMAILS = [
             "Tom Harris\nSenior Consultant, DB Consulting Inc.\n"
             "+1-555-0142\n\n"
             "---- Replied Message ----\n"
-            "From    Alex Chen <alex.chen@techcorp.com>\n"
+            "From    Momo <momo@techcorp.com>\n"
             "Date    03/19/2025 14:00\n"
             "To      <vendor@dbconsulting.com>\n"
             "Cc      <procurement@techcorp.com>\n"
@@ -877,7 +877,7 @@ MOCK_EMAILS = [
             "in April and could use some expert support. Could you put together a proposal "
             "for 2-3 weeks of DBA consulting?\n\n"
             "Happy to discuss details on a call.\n\n"
-            "Alex"
+            "Momo"
         ),
         "timestamp": "2025-03-24 09:50:00",
         "is_reply": True,
@@ -889,11 +889,11 @@ MOCK_EMAILS = [
         "id": "email_031",
         "from": "noreply@greenhouse.io",
         "from_name": "Greenhouse (Recruiting)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Interview reminder: Backend Engineer candidate tomorrow at 11am",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "Reminder: You have an interview scheduled for tomorrow.\n\n"
             "Candidate: Priya Sharma\n"
             "Position: Backend Engineer (Platform Team)\n"
@@ -916,11 +916,11 @@ MOCK_EMAILS = [
         "id": "email_032",
         "from": "noreply@medium.com",
         "from_name": "Medium Daily Digest",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Today's top picks for you: Platform Engineering, Distributed Systems",
         "body": (
-            "Good morning, Alex!\n\n"
+            "Good morning, Momo!\n\n"
             "Here are today's recommended reads based on your interests:\n\n"
             "1. 'How We Migrated 50TB of Data with Zero Downtime' — by Uber Engineering\n"
             "   A deep dive into Uber's database migration strategy...\n"
@@ -931,7 +931,7 @@ MOCK_EMAILS = [
             "3. 'Kubernetes at Scale: Lessons from Running 10,000 Pods' — by Shopify\n"
             "   Practical lessons from Shopify's platform team...\n"
             "   ⭐ 3.1K claps · 15 min read\n\n"
-            "Read more on Medium: https://medium.com/feed/alex-chen\n\n"
+            "Read more on Medium: https://medium.com/feed/momo\n\n"
             "Unsubscribe: https://medium.com/settings/notifications"
         ),
         "timestamp": "2025-03-24 05:30:00",
@@ -944,11 +944,11 @@ MOCK_EMAILS = [
         "id": "email_033",
         "from": "expenses@techcorp.com",
         "from_name": "Expense System (Automated)",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Action needed: 2 expense reports from your team awaiting approval",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "You have pending expense reports to approve:\n\n"
             "1. Lisa Zhang — $342.00\n"
             "   Description: AWS re:Invent conference travel (booked in advance)\n"
@@ -970,11 +970,11 @@ MOCK_EMAILS = [
         "id": "email_034",
         "from": "noreply@google.com",
         "from_name": "Google Workspace",
-        "to": ["alex.chen@techcorp.com"],
+        "to": ["momo@techcorp.com"],
         "cc": [],
         "subject": "Your Google Workspace storage is 85% full",
         "body": (
-            "Hi Alex,\n\n"
+            "Hi Momo,\n\n"
             "Your Google Workspace storage is almost full.\n\n"
             "Used: 12.8 GB of 15 GB (85%)\n\n"
             "Breakdown:\n"
@@ -1000,7 +1000,7 @@ LONG_THREAD_EXAMPLE = {
     "id": "thread_001",
     "subject": "Re: Q2 Platform Migration — Timeline Discussion",
     "participants": [
-        "alex.chen@techcorp.com",
+        "momo@techcorp.com",
         "lisa.zhang@techcorp.com",
         "ryan.ma@techcorp.com",
         "david.kim@techcorp.com",
@@ -1023,7 +1023,7 @@ LONG_THREAD_EXAMPLE = {
             "body": "Agree with Lisa. Also, we haven't accounted for the API versioning work. That's another week. May 15 seems more realistic."
         },
         {
-            "from": "alex.chen@techcorp.com",
+            "from": "momo@techcorp.com",
             "timestamp": "2025-03-20 14:00:00",
             "body": "I hear the concerns. Let me check with Sarah on whether May 15 works for the broader Q2 timeline. If it does, let's go with that."
         },
@@ -1033,7 +1033,7 @@ LONG_THREAD_EXAMPLE = {
             "body": "May 15 is acceptable for the migration itself, but the customer-facing features that depend on it need to ship by May 31. So we have zero buffer. Make sure the rollback plan is solid."
         },
         {
-            "from": "alex.chen@techcorp.com",
+            "from": "momo@techcorp.com",
             "timestamp": "2025-03-21 10:00:00",
             "body": "Understood. Lisa, can you own the rollback plan? Target: have it reviewed before the Go/No-Go meeting on March 24 (Monday)."
         },
@@ -1048,17 +1048,17 @@ LONG_THREAD_EXAMPLE = {
             "body": "Update: I just heard from the mobile team that they need the new API endpoints by May 10, not May 31. This changes things — if migration doesn't finish by May 10, mobile launch slips to Q3."
         },
         {
-            "from": "alex.chen@techcorp.com",
+            "from": "momo@techcorp.com",
             "timestamp": "2025-03-22 16:00:00",
             "body": "That's a significant change. We need to either: (1) accelerate the migration by adding 2 contractors, or (2) provide a partial API migration that gives mobile what they need by May 10 while we complete the full migration by May 15."
         },
         {
             "from": "sarah.wong@techcorp.com",
             "timestamp": "2025-03-23 09:00:00",
-            "body": "Option 2 (partial API first) sounds more pragmatic. Alex, can you scope what 'partial API migration' looks like and present it at Monday's Go/No-Go? I want to make a decision there."
+            "body": "Option 2 (partial API first) sounds more pragmatic. Momo, can you scope what 'partial API migration' looks like and present it at Monday's Go/No-Go? I want to make a decision there."
         },
         {
-            "from": "alex.chen@techcorp.com",
+            "from": "momo@techcorp.com",
             "timestamp": "2025-03-23 10:00:00",
             "body": "Will do. Lisa and Ryan, let's sync at 3pm today to figure out which API endpoints mobile needs first and what it takes to migrate those separately."
         },
