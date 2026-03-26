@@ -2172,8 +2172,10 @@ async function submitTestEmail() {
         btn.disabled = false;
         btn.textContent = 'Send & Analyze';
 
-        selectEmail(newEmail.id);
+        const pri = getEmailPriority(newEmail);
+        if (pri && pri !== 'unknown') switchTab(pri);
         renderEmailList();
+        selectEmail(newEmail.id);
     } catch (e) {
         btn.disabled = false;
         btn.textContent = 'Send & Analyze';
@@ -2224,6 +2226,11 @@ async function submitBatchEmails() {
     closeTestModal();
     btn.disabled = false;
     btn.textContent = 'Send All & Analyze';
+
+    if (lastEmail) {
+        const pri = getEmailPriority(lastEmail);
+        if (pri && pri !== 'unknown') switchTab(pri);
+    }
     renderEmailList();
     if (lastEmail) selectEmail(lastEmail.id);
     showSuccessToast(`📩 ${total} email(s) added and analyzed`, 'todo');
